@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Merger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            },
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-primary dark:text-primary">圖片合併工具</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Left image upload -->
+            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]">
+                <div id="preview1" class="w-full hidden mb-2">
+                    <img id="previewImage1" class="max-h-48 mx-auto object-contain" alt="Preview 1">
+                </div>
+                <label for="image1" class="cursor-pointer flex flex-col items-center justify-center w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="mt-2 text-sm text-gray-600 dark:text-gray-400">上傳左側圖片</span>
+                </label>
+                <input type="file" id="image1" class="hidden" accept="image/*">
+            </div>
+            
+            <!-- Right image upload -->
+            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]">
+                <div id="preview2" class="w-full hidden mb-2">
+                    <img id="previewImage2" class="max-h-48 mx-auto object-contain" alt="Preview 2">
+                </div>
+                <label for="image2" class="cursor-pointer flex flex-col items-center justify-center w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="mt-2 text-sm text-gray-600 dark:text-gray-400">上傳右側圖片</span>
+                </label>
+                <input type="file" id="image2" class="hidden" accept="image/*">
+            </div>
+        </div>
+        
+        <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">分割模式</label>
+                    <div class="flex">
+                        <button id="straightModeBtn" class="flex-1 bg-primary text-white py-2 px-4 rounded-l-lg">直線模式</button>
+                        <button id="diagonalModeBtn" class="flex-1 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-r-lg">斜線模式</button>
+                    </div>
+                </div>
+                
+                <div id="diagonalControls" class="flex-1 hidden">
+                    <label for="diagonalSlider" class="block text-sm font-medium mb-2">斜線位置調整</label>
+                    <input type="range" id="diagonalSlider" min="0" max="100" value="50" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="mergeBtn" class="bg-primary hover:bg-primary/80 text-white py-2 px-6 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition" disabled>
+                    合併圖片
+                </button>
+            </div>
+        </div>
+        
+        <div id="resultContainer" class="hidden">
+            <div class="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-center">合併結果 (16:9)</h2>
+                <div class="flex justify-center">
+                    <canvas id="resultCanvas" class="max-w-full"></canvas>
+                </div>
+            </div>
+            
+            <div class="flex justify-center">
+                <a id="downloadBtn" href="#" download="merged_image.png" class="bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    下載合併圖片
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Image handling
+        let image1 = null;
+        let image2 = null;
+        let isDiagonalMode = false;
+        let diagonalPosition = 50; // default position (percentage)
+        const mergeBtn = document.getElementById('mergeBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const canvas = document.getElementById('resultCanvas');
+        const ctx = canvas.getContext('2d');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const straightModeBtn = document.getElementById('straightModeBtn');
+        const diagonalModeBtn = document.getElementById('diagonalModeBtn');
+        const diagonalControls = document.getElementById('diagonalControls');
+        const diagonalSlider = document.getElementById('diagonalSlider');
+
+        // Image upload handlers
+        document.getElementById('image1').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        image1 = img;
+                        document.getElementById('previewImage1').src = event.target.result;
+                        document.getElementById('preview1').classList.remove('hidden');
+                        checkEnableMerge();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('image2').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        image2 = img;
+                        document.getElementById('previewImage2').src = event.target.result;
+                        document.getElementById('preview2').classList.remove('hidden');
+                        checkEnableMerge();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function checkEnableMerge() {
+            mergeBtn.disabled = !(image1 && image2);
+        }
+
+        // Mode switching
+        straightModeBtn.addEventListener('click', function() {
+            isDiagonalMode = false;
+            straightModeBtn.classList.add('bg-primary', 'text-white');
+            straightModeBtn.classList.remove('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            diagonalModeBtn.classList.remove('bg-primary', 'text-white');
+            diagonalModeBtn.classList.add('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            diagonalControls.classList.add('hidden');
+        });
+        
+        diagonalModeBtn.addEventListener('click', function() {
+            isDiagonalMode = true;
+            diagonalModeBtn.classList.add('bg-primary', 'text-white');
+            diagonalModeBtn.classList.remove('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            straightModeBtn.classList.remove('bg-primary', 'text-white');
+            straightModeBtn.classList.add('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            diagonalControls.classList.remove('hidden');
+        });
+        
+        diagonalSlider.addEventListener('input', function(e) {
+            diagonalPosition = parseInt(e.target.value);
+        });
+
+        // Merge function
+        mergeBtn.addEventListener('click', function() {
+            if (!image1 || !image2) return;
+            
+            // Set target dimensions with 16:9 aspect ratio
+            const targetWidth = 1600;
+            const targetHeight = 900; // 16:9 ratio
+            
+            // Set canvas dimensions
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            
+            // Clear canvas with black background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (isDiagonalMode) {
+                // Draw with diagonal dividing line
+                drawWithDiagonalLine();
+            } else {
+                // Draw with straight vertical line (original mode)
+                const halfWidth = targetWidth / 2;
+                drawScaledImage(image1, 0, halfWidth, targetHeight);
+                drawScaledImage(image2, halfWidth, halfWidth, targetHeight);
+            }
+            
+            // Show result and download button
+            resultContainer.classList.remove('hidden');
+            
+            // Update download link
+            downloadBtn.href = canvas.toDataURL('image/png');
+            
+            // Scroll to result
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Helper function to draw a scaled image maintaining aspect ratio
+        function drawScaledImage(img, destX, destWidth, destHeight) {
+            const imgRatio = img.width / img.height;
+            const destRatio = destWidth / destHeight;
+            
+            let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+            
+            if (imgRatio > destRatio) {
+                // Image is wider than destination area - fit to height
+                drawHeight = destHeight;
+                drawWidth = drawHeight * imgRatio;
+                offsetX = destX + (destWidth - drawWidth) / 2;
+                offsetY = 0;
+            } else {
+                // Image is taller than destination area - fit to width
+                drawWidth = destWidth;
+                drawHeight = drawWidth / imgRatio;
+                offsetX = destX;
+                offsetY = (destHeight - drawHeight) / 2;
+            }
+            
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+        }
+        
+        // Function to draw with diagonal dividing line
+        function drawWithDiagonalLine() {
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            // Calculate diagonal position based on slider
+            // Map 0-100 to positions that look good visually
+            const position = diagonalPosition / 100;
+            
+            // Create clipping paths for each image
+            // First image (left side)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(w * position, 0);
+            ctx.lineTo(w * (1 - position), h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Draw the first image (scaled to full canvas)
+            drawScaledImage(image1, 0, w, h);
+            ctx.restore();
+            
+            // Second image (right side)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(w * position, 0);
+            ctx.lineTo(w, 0);
+            ctx.lineTo(w, h);
+            ctx.lineTo(w * (1 - position), h);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Draw the second image (scaled to full canvas)
+            drawScaledImage(image2, 0, w, h);
+            ctx.restore();
+        }
+    </script>
+</body>
+</html>
