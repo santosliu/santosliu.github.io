@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡繁轉換工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 標題 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">簡繁轉換工具</h1>
+            <p class="text-gray-600 dark:text-gray-400">輸入中文文字，一鍵轉換簡體或繁體</p>
+        </div>
+
+        <!-- 主要內容區域 -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+            <!-- 輸入區域 -->
+            <div class="mb-6">
+                <label for="inputText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    輸入文字
+                </label>
+                <textarea 
+                    id="inputText" 
+                    rows="6"
+                    class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-vertical"
+                    placeholder="請輸入要轉換的中文文字..."
+                ></textarea>
+            </div>
+
+            <!-- 按鈕區域 -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                <button 
+                    id="toSimplified"
+                    class="flex-1 bg-primary hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                >
+                    轉換為簡體
+                </button>
+                <button 
+                    id="toTraditional"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                >
+                    轉換為繁體
+                </button>
+            </div>
+
+            <!-- 輸出區域 -->
+            <div>
+                <label for="outputText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    轉換結果
+                </label>
+                <div class="relative">
+                    <textarea 
+                        id="outputText" 
+                        rows="6"
+                        readonly
+                        class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-900 dark:text-white resize-vertical"
+                        placeholder="轉換結果將顯示在這裡..."
+                    ></textarea>
+                    <button 
+                        id="copyButton"
+                        class="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 opacity-0"
+                        title="複製結果"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用說明 -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">使用說明</h3>
+            <ul class="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                <li>• 在上方輸入框中輸入中文文字</li>
+                <li>• 點擊「轉換為簡體」或「轉換為繁體」按鈕</li>
+                <li>• 轉換結果會顯示在下方的結果框中</li>
+                <li>• 可以點擊複製按鈕來複製轉換結果</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 深淺色模式檢測
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // 簡繁對照表 (常用字符)
+        const simplifiedToTraditional = {
+            '个': '個', '为': '為', '从': '從', '会': '會', '来': '來', '对': '對', '说': '說',
+            '还': '還', '没': '沒', '这': '這', '那': '那', '些': '些', '能': '能', '时': '時',
+            '过': '過', '很': '很', '要': '要', '就': '就', '现': '現', '发': '發', '开': '開',
+            '关': '關', '问': '問', '题': '題', '学': '學', '习': '習', '工': '工', '作': '作',
+            '国': '國', '家': '家', '经': '經', '济': '濟', '历': '歷', '史': '史', '文': '文',
+            '化': '化', '社': '社', '会': '會', '发': '發', '展': '展', '建': '建', '设': '設',
+            '管': '管', '理': '理', '系': '系', '统': '統', '信': '信', '息': '息', '技': '技',
+            '术': '術', '网': '網', '络': '絡', '电': '電', '脑': '腦', '计': '計', '算': '算',
+            '机': '機', '软': '軟', '件': '件', '硬': '硬', '务': '務', '业': '業', '产': '產',
+            '品': '品', '市': '市', '场': '場', '价': '價', '格': '格', '质': '質', '量': '量',
+            '标': '標', '准': '準', '规': '規', '范': '範', '流': '流', '程': '程', '步': '步',
+            '骤': '驟', '方': '方', '法': '法', '式': '式', '样': '樣', '种': '種', '类': '類',
+            '别': '別', '特': '特', '点': '點', '级': '級', '层': '層', '次': '次', '结': '結',
+            '构': '構', '组': '組', '织': '織', '单': '單', '位': '位', '部': '部', '门': '門',
+            '员': '員', '干': '幹', '部': '部', '领': '領', '导': '導', '负': '負', '责': '責',
+            '任': '任', '务': '務', '项': '項', '目': '目', '计': '計', '划': '劃', '案': '案',
+            '例': '例', '实': '實', '际': '際', '具': '具', '体': '體', '详': '詳', '细': '細',
+            '简': '簡', '单': '單', '复': '複', '杂': '雜', '困': '困', '难': '難', '容': '容',
+            '易': '易', '重': '重', '要': '要', '主': '主', '次': '次', '先': '先', '后': '後',
+            '前': '前', '面': '面', '背': '背', '左': '左', '右': '右', '上': '上', '下': '下',
+            '内': '內', '外': '外', '中': '中', '间': '間', '里': '裡', '边': '邊', '侧': '側',
+            '旁': '旁', '近': '近', '远': '遠', '高': '高', '低': '低', '大': '大', '小': '小',
+            '长': '長', '短': '短', '宽': '寬', '窄': '窄', '厚': '厚', '薄': '薄', '深': '深',
+            '浅': '淺', '快': '快', '慢': '慢', '早': '早', '晚': '晚', '新': '新', '旧': '舊',
+            '好': '好', '坏': '壞', '美': '美', '丑': '醜', '热': '熱', '冷': '冷', '温': '溫',
+            '凉': '涼', '干': '乾', '湿': '濕', '净': '淨', '脏': '髒', '亮': '亮', '暗': '暗',
+            '响': '響', '静': '靜', '吵': '吵', '闹': '鬧', '忙': '忙', '闲': '閒', '累': '累',
+            '轻': '輕', '松': '鬆', '紧': '緊', '密': '密', '疏': '疏', '稀': '稀', '稠': '稠',
+            '粗': '粗', '细': '細', '软': '軟', '硬': '硬', '滑': '滑', '粗': '粗', '糙': '糙',
+            '光': '光', '滑': '滑', '平': '平', '整': '整', '齐': '齊', '乱': '亂', '乖': '乖',
+            '听': '聽', '话': '話', '说': '說', '讲': '講', '谈': '談', '论': '論', '议': '議',
+            '讨': '討', '辩': '辯', '争': '爭', '吵': '吵', '架': '架', '骂': '罵', '哭': '哭',
+            '笑': '笑', '乐': '樂', '愁': '愁', '苦': '苦', '痛': '痛', '伤': '傷', '害': '害',
+            '怕': '怕', '恐': '恐', '怖': '怖', '惊': '驚', '吓': '嚇', '怒': '怒', '气': '氣',
+            '生': '生', '活': '活', '死': '死', '亡': '亡', '病': '病', '康': '康', '健': '健',
+            '强': '強', '弱': '弱', '胖': '胖', '瘦': '瘦', '高': '高', '矮': '矮', '美': '美',
+            '帅': '帥', '丑': '醜', '老': '老', '少': '少', '年': '年', '轻': '輕', '青': '青',
+            '春': '春', '夏': '夏', '秋': '秋', '冬': '冬', '季': '季', '节': '節', '日': '日',
+            '月': '月', '年': '年', '世': '世', '纪': '紀', '代': '代', '期': '期', '间': '間',
+            '时': '時', '刻': '刻', '分': '分', '秒': '秒', '钟': '鐘', '表': '表', '钱': '錢',
+            '币': '幣', '元': '元', '角': '角', '分': '分', '块': '塊', '毛': '毛', '万': '萬',
+            '千': '千', '百': '百', '十': '十', '九': '九', '八': '八', '七': '七', '六': '六',
+            '五': '五', '四': '四', '三': '三', '二': '二', '一': '一', '零': '零', '两': '兩',
+            '双': '雙', '对': '對', '副': '副', '套': '套', '件': '件', '条': '條', '根': '根',
+            '支': '支', '只': '只', '个': '個', '位': '位', '名': '名', '人': '人', '口': '口',
+            '头': '頭', '身': '身', '体': '體', '手': '手', '脚': '腳', '腿': '腿', '胳': '胳',
+            '膊': '膊', '肩': '肩', '膀': '膀', '胸': '胸', '背': '背', '腰': '腰', '肚': '肚',
+            '子': '子', '脸': '臉', '眼': '眼', '睛': '睛', '鼻': '鼻', '嘴': '嘴', '耳': '耳',
+            '朵': '朵', '头': '頭', '发': '髮', '眉': '眉', '毛': '毛', '牙': '牙', '齿': '齒',
+            '舌': '舌', '唇': '唇', '喉': '喉', '咙': '嚨', '心': '心', '肝': '肝', '肺': '肺',
+            '肾': '腎', '胃': '胃', '肠': '腸', '血': '血', '肉': '肉', '骨': '骨', '皮': '皮',
+            '肤': '膚', '毛': '毛', '衣': '衣', '服': '服', '裤': '褲', '裙': '裙', '鞋': '鞋',
+            '袜': '襪', '帽': '帽', '围': '圍', '巾': '巾', '领': '領', '带': '帶', '钮': '鈕',
+            '扣': '扣', '拉': '拉', '链': '鏈', '袋': '袋', '包': '包', '箱': '箱', '盒': '盒',
+            '瓶': '瓶', '杯': '杯', '碗': '碗', '盘': '盤', '碟': '碟', '筷': '筷', '勺': '勺',
+            '刀': '刀', '叉': '叉', '锅': '鍋', '炉': '爐', '灶': '灶', '冰': '冰', '箱': '箱',
+            '洗': '洗', '衣': '衣', '机': '機', '电': '電', '视': '視', '机': '機', '电': '電',
+            '话': '話', '手': '手', '机': '機', '电': '電', '脑': '腦', '音': '音', '响': '響',
+            '收': '收', '音': '音', '机': '機', '录': '錄', '音': '音', '机': '機', '照': '照',
+            '相': '相', '机': '機', '摄': '攝', '像': '像', '机': '機', '打': '打', '印': '印',
+            '机': '機', '复': '複', '印': '印', '机': '機', '传': '傳', '真': '真', '机': '機',
+            '扫': '掃', '描': '描', '仪': '儀', '键': '鍵', '盘': '盤', '鼠': '鼠', '标': '標',
+            '显': '顯', '示': '示', '器': '器', '屏': '屏', '幕': '幕', '音': '音', '箱': '箱',
+            '话': '話', '筒': '筒', '耳': '耳', '机': '機', '线': '線', '缆': '纜', '插': '插',
+            '座': '座', '开': '開', '关': '關', '按': '按', '钮': '鈕', '遥': '遙', '控': '控',
+            '器': '器', '电': '電', '池': '池', '充': '充', '电': '電', '器': '器', '变': '變',
+            '压': '壓', '器': '器', '适': '適', '配': '配', '器': '器', '转': '轉', '换': '換',
+            '器': '器', '连': '連', '接': '接', '器': '器', '分': '分', '离': '離', '器': '器',
+            '合': '合', '并': '併', '器': '器', '放': '放', '大': '大', '器': '器', '缩': '縮',
+            '小': '小', '器': '器', '过': '過', '滤': '濾', '器': '器', '净': '淨', '化': '化',
+            '器': '器', '加': '加', '热': '熱', '器': '器', '制': '制', '冷': '冷', '器': '器',
+            '空': '空', '调': '調', '风': '風', '扇': '扇', '暖': '暖', '气': '氣', '片': '片',
+            '取': '取', '暖': '暖', '器': '器', '电': '電', '热': '熱', '毯': '毯', '电': '電',
+            '褥': '褥', '子': '子', '床': '床', '垫': '墊', '枕': '枕', '头': '頭', '被': '被',
+            '子': '子', '毯': '毯', '单': '單', '子': '子', '床': '床', '单': '單', '毛': '毛',
+            '巾': '巾', '浴': '浴', '巾': '巾', '牙': '牙', '刷': '刷', '牙': '牙', '膏': '膏',
+            '洗': '洗', '发': '髮', '水': '水', '护': '護', '发': '髮', '素': '素', '沐': '沐',
+            '浴': '浴', '露': '露', '香': '香', '皂': '皂', '肥': '肥', '皂': '皂', '洗': '洗',
+            '面': '面', '奶': '奶', '化': '化', '妆': '妝', '品': '品', '口': '口', '红': '紅',
+            '眼': '眼', '影': '影', '睫': '睫', '毛': '毛', '膏': '膏', '指': '指', '甲': '甲',
+            '油': '油', '香': '香', '水': '水', '乳': '乳', '液': '液', '面': '面', '霜': '霜',
+            '防': '防', '晒': '曬', '霜': '霜', '润': '潤', '肤': '膚', '霜': '霜', '护': '護',
+            '手': '手', '霜': '霜', '身': '身', '体': '體', '乳': '乳', '剃': '剃', '须': '鬚',
+            '刀': '刀', '剃': '剃', '须': '鬚', '膏': '膏', '卫': '衛', '生': '生', '纸': '紙',
+            '纸': '紙', '巾': '巾', '湿': '濕', '巾': '巾', '尿': '尿', '布': '布', '尿': '尿',
+            '片': '片', '奶': '奶', '瓶': '瓶', '奶': '奶', '嘴': '嘴', '安': '安', '抚': '撫',
+            '奶': '奶', '嘴': '嘴', '玩': '玩', '具': '具', '积': '積', '木': '木', '拼': '拼',
+            '图': '圖', '彩': '彩', '笔': '筆', '蜡': '蠟', '笔': '筆', '铅': '鉛', '笔': '筆',
+            '钢': '鋼', '笔': '筆', '毛': '毛', '笔': '筆', '圆': '圓', '珠': '珠', '笔': '筆',
+            '马': '馬', '克': '克', '笔': '筆', '荧': '螢', '光': '光', '笔': '筆', '水': '水',
+            '彩': '彩', '笔': '筆', '油': '油', '画': '畫', '棒': '棒', '橡': '橡', '皮': '皮',
+            '尺': '尺', '子': '子', '三': '三', '角': '角', '板': '板', '圆': '圓', '规': '規',
+            '量': '量', '角': '角', '器': '器', '计': '計', '算': '算', '器': '器', '订': '訂',
+            '书': '書', '机': '機', '打': '打', '孔': '孔', '器': '器', '胶': '膠', '水': '水',
+            '胶': '膠', '带': '帶', '双': '雙', '面': '面', '胶': '膠', '透': '透', '明': '明',
+            '胶': '膠', '剪': '剪', '刀': '刀', '美': '美', '工': '工', '刀': '刀', '刻': '刻',
+            '刀': '刀', '笔': '筆', '刀': '刀', '文': '文', '件': '件', '夹': '夾', '档': '檔',
+            '案': '案', '袋': '袋', '公': '公', '文': '文', '包': '包', '书': '書', '包': '包',
+            '背': '背', '包': '包', '手': '手', '提': '提', '包': '包', '钱': '錢', '包': '包',
+            '钱': '錢', '夹': '夾', '皮': '皮', '夹': '夾', '卡': '卡', '包': '包', '证': '證',
+            '件': '件', '包': '包', '护': '護', '照': '照', '包': '包'
+        };
+
+        const traditionalToSimplified = {};
+        for (const [key, value] of Object.entries(simplifiedToTraditional)) {
+            traditionalToSimplified[value] = key;
+        }
+
+        // 轉換函數
+        function convertToTraditional(text) {
+            return text.split('').map(char => simplifiedToTraditional[char] || char).join('');
+        }
+
+        function convertToSimplified(text) {
+            return text.split('').map(char => traditionalToSimplified[char] || char).join('');
+        }
+
+        // 獲取DOM元素
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const toSimplifiedBtn = document.getElementById('toSimplified');
+        const toTraditionalBtn = document.getElementById('toTraditional');
+        const copyButton = document.getElementById('copyButton');
+
+        // 轉換按鈕事件
+        toSimplifiedBtn.addEventListener('click', () => {
+            const text = inputText.value.trim();
+            if (text) {
+                const converted = convertToSimplified(text);
+                outputText.value = converted;
+                showCopyButton();
+            } else {
+                alert('請先輸入要轉換的文字');
+            }
+        });
+
+        toTraditionalBtn.addEventListener('click', () => {
+            const text = inputText.value.trim();
+            if (text) {
+                const converted = convertToTraditional(text);
+                outputText.value = converted;
+                showCopyButton();
+            } else {
+                alert('請先輸入要轉換的文字');
+            }
+        });
+
+        // 顯示複製按鈕
+        function showCopyButton() {
+            if (outputText.value.trim()) {
+                copyButton.classList.remove('opacity-0');
+                copyButton.classList.add('opacity-100');
+            } else {
+                copyButton.classList.add('opacity-0');
+                copyButton.classList.remove('opacity-100');
+            }
+        }
+
+        // 複製功能
+        copyButton.addEventListener('click', async () => {
+            if (outputText.value.trim()) {
+                try {
+                    await navigator.clipboard.writeText(outputText.value);
+                    // 簡單的反饋效果
+                    const originalText = copyButton.innerHTML;
+                    copyButton.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalText;
+                    }, 1000);
+                } catch (err) {
+                    console.error('複製失敗:', err);
+                }
+            }
+        });
+
+        // 監聽輸出框內容變化
+        outputText.addEventListener('input', showCopyButton);
+
+        // 快捷鍵支持
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === '1') {
+                    e.preventDefault();
+                    toSimplifiedBtn.click();
+                } else if (e.key === '2') {
+                    e.preventDefault();
+                    toTraditionalBtn.click();
+                }
+            }
+        });
+
+        // 自動調整文本框高度
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        inputText.addEventListener('input', () => autoResize(inputText));
+        outputText.addEventListener('input', () => autoResize(outputText));
+    </script>
+</body>
+</html>
