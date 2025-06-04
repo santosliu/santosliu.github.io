@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Code Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+</head>
+<body class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">隨機碼產生器</h1>
+        
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <div class="w-full sm:w-auto">
+                <label for="codeCount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">產生數量</label>
+                <input type="number" id="codeCount" min="1" max="100" value="50" class="w-full sm:w-36 px-4 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-white">
+            </div>
+            
+            <div class="w-full sm:w-auto">
+                <label for="codeLength" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">代碼長度</label>
+                <input type="number" id="codeLength" min="4" max="20" value="8" class="w-full sm:w-36 px-4 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-white">
+            </div>
+            
+            <button id="generateBtn" class="w-full sm:w-auto bg-primary hover:bg-primary/80 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg">
+                產生隨機代碼
+            </button>
+        </div>
+        
+        <div id="result" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 opacity-0 transition-opacity duration-300"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateBtn = document.getElementById('generateBtn');
+            const resultContainer = document.getElementById('result');
+            
+            generateBtn.addEventListener('click', generateRandomCodes);
+            
+            function generateRandomCodes() {
+                // Clear previous results
+                resultContainer.innerHTML = '';
+                resultContainer.classList.add('opacity-0');
+                
+                // Get the number of codes to generate from input
+                const codeCount = parseInt(document.getElementById('codeCount').value) || 50;
+                
+                // Generate the requested number of random codes
+                const codes = [];
+                for (let i = 0; i < codeCount; i++) {
+                    codes.push(generateRandomCode());
+                }
+                
+                // Display the codes
+                codes.forEach((code, index) => {
+                    const codeElement = document.createElement('div');
+                    codeElement.className = 'p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-800 dark:text-gray-200 font-mono text-center';
+                    codeElement.innerHTML = `<span class="text-gray-500 dark:text-gray-400 mr-2">${index + 1}.</span>${code}`;
+                    resultContainer.appendChild(codeElement);
+                });
+                
+                // Show results with animation
+                setTimeout(() => {
+                    resultContainer.classList.remove('opacity-0');
+                }, 50);
+            }
+            
+            function generateRandomCode() {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                // Get length from input field, default to 8 if invalid
+                const length = parseInt(document.getElementById('codeLength').value) || 8;
+                let result = '';
+                
+                for (let i = 0; i < length; i++) {
+                    const randomIndex = Math.floor(Math.random() * chars.length);
+                    result += chars.charAt(randomIndex);
+                }
+                
+                return result;
+            }
+        });
+    </script>
+</body>
+</html>
