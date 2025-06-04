@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Markdown Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .dark .dark\:bg-dark {
+            background-color: #181818;
+        }
+        .dark .dark\:text-white {
+            color: white;
+        }
+        .dark .dark\:border-gray-700 {
+            border-color: #374151;
+        }
+        .drop-zone {
+            border: 2px dashed #ccc;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.active {
+            border-color: #5D5CDE;
+            background-color: rgba(93, 92, 222, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-dark text-gray-900 dark:text-white transition-colors duration-200">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8">PDF to Markdown Converter</h1>
+        
+        <div class="mb-8">
+            <div id="dropZone" class="drop-zone rounded-lg p-8 text-center cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="text-lg mb-2">Drag and drop your PDF file here</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">or</p>
+                <label for="fileInput" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition cursor-pointer">
+                    Select PDF File
+                </label>
+                <input type="file" id="fileInput" accept=".pdf" class="hidden" />
+            </div>
+            <p id="fileInfo" class="mt-4 text-center hidden"></p>
+        </div>
+
+        <div id="loadingContainer" class="hidden">
+            <div class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+            <p class="text-center">Converting PDF to Markdown...</p>
+        </div>
+
+        <div id="resultContainer" class="hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md mb-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Markdown Result</h2>
+                    <button id="copyButton" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition">
+                        Copy to Clipboard
+                    </button>
+                </div>
+                <textarea id="markdownOutput" class="w-full h-96 p-4 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 focus:ring-primary focus:border-primary text-base" readonly></textarea>
+            </div>
+            
+            <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg text-blue-800 dark:text-blue-100">
+                <h3 class="font-semibold mb-2">How to save the Markdown file:</h3>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>Click the "Copy to Clipboard" button above</li>
+                    <li>Open a text editor on your computer (like Notepad, TextEdit, or VS Code)</li>
+                    <li>Paste the content (Ctrl+V or Cmd+V)</li>
+                    <li>Save the file with a .md extension</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set up PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        // Listen for changes in color scheme
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const resultContainer = document.getElementById('resultContainer');
+        const markdownOutput = document.getElementById('markdownOutput');
+        const copyButton = document.getElementById('copyButton');
+
+        // Handle drag and drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropZone.classList.add('active');
+        }
+
+        function unhighlight() {
+            dropZone.classList.remove('active');
+        }
+
+        // Handle file drop
+        dropZone.addEventListener('drop', handleDrop, false);
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Handle file input change
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        // Handle uploaded files
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    fileInfo.textContent = `File: ${file.name}`;
+                    fileInfo.classList.remove('hidden');
+                    loadingContainer.classList.remove('hidden');
+                    resultContainer.classList.add('hidden');
+                    
+                    convertPdfToMarkdown(file);
+                } else {
+                    alert('Please select a PDF file.');
+                }
+            }
+        }
+
+        // Convert PDF to Markdown
+        async function convertPdfToMarkdown(file) {
+            try {
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                
+                let markdownText = `# ${file.name.replace('.pdf', '')}\n\n`;
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    
+                    // Process text items on this page
+                    let lastY = null;
+                    let textItems = textContent.items;
+                    
+                    // Sort items by y position and then x position for better reading order
+                    textItems.sort((a, b) => {
+                        if (Math.abs(a.transform[5] - b.transform[5]) < 5) {
+                            return a.transform[4] - b.transform[4];
+                        }
+                        return b.transform[5] - a.transform[5];
+                    });
+                    
+                    // Process text items into markdown
+                    for (let j = 0; j < textItems.length; j++) {
+                        const item = textItems[j];
+                        
+                        // Check for new paragraph based on y-position
+                        if (lastY !== null && Math.abs(lastY - item.transform[5]) > 10) {
+                            markdownText += '\n\n';
+                        } else if (j > 0 && !markdownText.endsWith(' ') && !markdownText.endsWith('\n')) {
+                            markdownText += ' ';
+                        }
+                        
+                        // Check for potential headings or list items
+                        let text = item.str;
+                        
+                        // Simple heuristics for list items
+                        if ((text.trim().startsWith('•') || text.trim().startsWith('-') || 
+                             text.trim().match(/^\d+\./)) && 
+                            (lastY === null || Math.abs(lastY - item.transform[5]) > 10)) {
+                            markdownText += '\n- ';
+                            text = text.replace(/^[\-•]|\d+\./, '').trim();
+                        }
+                        
+                        // Simple heuristic for headings (larger font)
+                        const fontSize = Math.abs(item.transform[3]);
+                        if (fontSize > 14 && (lastY === null || Math.abs(lastY - item.transform[5]) > 10)) {
+                            // Estimate heading level based on font size
+                            let level = 2;
+                            if (fontSize > 20) level = 2;
+                            else if (fontSize > 16) level = 3;
+                            else level = 4;
+                            
+                            markdownText += '\n\n' + '#'.repeat(level) + ' ';
+                        }
+                        
+                        markdownText += text;
+                        lastY = item.transform[5];
+                    }
+                    
+                    // Add page break between pages
+                    if (i < pdf.numPages) {
+                        markdownText += '\n\n---\n\n';
+                    }
+                }
+                
+                // Show result
+                markdownOutput.value = markdownText;
+                loadingContainer.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error processing PDF:', error);
+                loadingContainer.classList.add('hidden');
+                markdownOutput.value = `Error processing PDF: ${error.message}`;
+                resultContainer.classList.remove('hidden');
+            }
+        }
+
+        // Copy to clipboard
+        copyButton.addEventListener('click', function() {
+            markdownOutput.select();
+            document.execCommand('copy');
+            
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copied!';
+            copyButton.disabled = true;
+            
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+                copyButton.disabled = false;
+            }, 2000);
+        });
+
+        // Helper function to read file as ArrayBuffer
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+    </script>
+</body>
+</html>
