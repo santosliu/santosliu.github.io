@@ -241,8 +241,8 @@
             } else {
                 // Draw with straight vertical line (original mode)
                 const halfWidth = targetWidth / 2;
-                drawScaledImage(image1, 0, halfWidth, targetHeight);
-                drawScaledImage(image2, halfWidth, halfWidth, targetHeight);
+                drawScaledImage(image1, 0, halfWidth, targetHeight, image1OffsetX, image1OffsetY);
+                drawScaledImage(image2, halfWidth, halfWidth, targetHeight, image2OffsetX, image2OffsetY);
             }
             
             // Show result and download button
