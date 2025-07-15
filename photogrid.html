@@ -24,30 +24,30 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <!-- Left image upload -->
-            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]">
-                <div id="preview1" class="w-full hidden mb-2">
-                    <img id="previewImage1" class="max-h-48 mx-auto object-contain" alt="Preview 1">
-                </div>
-                <label for="image1" class="cursor-pointer flex flex-col items-center justify-center w-full">
+            <div id="uploadArea1" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px] relative overflow-hidden">
+                <label for="image1" id="label1" class="cursor-pointer flex flex-col items-center justify-center w-full h-full absolute inset-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span class="mt-2 text-sm text-gray-600 dark:text-gray-400">上傳左側圖片</span>
                 </label>
+                <div id="preview1" class="w-full h-full hidden relative">
+                    <img id="previewImage1" class="max-h-full max-w-full object-contain absolute top-0 left-0 cursor-grab" alt="Preview 1" data-image-id="1">
+                </div>
                 <input type="file" id="image1" class="hidden" accept="image/*">
             </div>
             
             <!-- Right image upload -->
-            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]">
-                <div id="preview2" class="w-full hidden mb-2">
-                    <img id="previewImage2" class="max-h-48 mx-auto object-contain" alt="Preview 2">
-                </div>
-                <label for="image2" class="cursor-pointer flex flex-col items-center justify-center w-full">
+            <div id="uploadArea2" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px] relative overflow-hidden">
+                <label for="image2" id="label2" class="cursor-pointer flex flex-col items-center justify-center w-full h-full absolute inset-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span class="mt-2 text-sm text-gray-600 dark:text-gray-400">上傳右側圖片</span>
                 </label>
+                <div id="preview2" class="w-full h-full hidden relative">
+                    <img id="previewImage2" class="max-h-full max-w-full object-contain absolute top-0 left-0 cursor-grab" alt="Preview 2" data-image-id="2">
+                </div>
                 <input type="file" id="image2" class="hidden" accept="image/*">
             </div>
         </div>
@@ -110,8 +110,14 @@
         // Image handling
         let image1 = null;
         let image2 = null;
+        let image1OffsetX = 0; // 圖片1的X軸偏移量
+        let image1OffsetY = 0; // 圖片1的Y軸偏移量
+        let image2OffsetX = 0; // 圖片2的X軸偏移量
+        let image2OffsetY = 0; // 圖片2的Y軸偏移量
+
         let isDiagonalMode = false;
         let diagonalPosition = 50; // default position (percentage)
+
         const mergeBtn = document.getElementById('mergeBtn');
         const resultContainer = document.getElementById('resultContainer');
         const canvas = document.getElementById('resultCanvas');
@@ -122,6 +128,19 @@
         const diagonalControls = document.getElementById('diagonalControls');
         const diagonalSlider = document.getElementById('diagonalSlider');
 
+        const previewImage1 = document.getElementById('previewImage1');
+        const previewImage2 = document.getElementById('previewImage2');
+        const preview1Container = document.getElementById('preview1');
+        const preview2Container = document.getElementById('preview2');
+        const label1 = document.getElementById('label1');
+        const label2 = document.getElementById('label2');
+
+        // Dragging variables
+        let isDragging = false;
+        let draggedImage = null; // Reference to the image element being dragged
+        let startX, startY; // Mouse start position
+        let currentOffsetX, currentOffsetY; // Current image offset
+
         // Image upload handlers
         document.getElementById('image1').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -131,8 +150,15 @@
                     const img = new Image();
                     img.onload = function() {
                         image1 = img;
-                        document.getElementById('previewImage1').src = event.target.result;
-                        document.getElementById('preview1').classList.remove('hidden');
+                        previewImage1.src = event.target.result;
+                        preview1Container.classList.remove('hidden');
+                        label1.classList.add('hidden'); // Hide label after image upload
+                        
+                        // Reset offset and position for new image
+                        image1OffsetX = 0;
+                        image1OffsetY = 0;
+                        previewImage1.style.left = '0px';
+                        previewImage1.style.top = '0px';
                         checkEnableMerge();
                     };
                     img.src = event.target.result;
@@ -149,8 +175,15 @@
                     const img = new Image();
                     img.onload = function() {
                         image2 = img;
-                        document.getElementById('previewImage2').src = event.target.result;
-                        document.getElementById('preview2').classList.remove('hidden');
+                        previewImage2.src = event.target.result;
+                        preview2Container.classList.remove('hidden');
+                        label2.classList.add('hidden'); // Hide label after image upload
+
+                        // Reset offset and position for new image
+                        image2OffsetX = 0;
+                        image2OffsetY = 0;
+                        previewImage2.style.left = '0px';
+                        previewImage2.style.top = '0px';
                         checkEnableMerge();
                     };
                     img.src = event.target.result;
@@ -223,7 +256,8 @@
         });
         
         // Helper function to draw a scaled image maintaining aspect ratio
-        function drawScaledImage(img, destX, destWidth, destHeight) {
+        // Now accepts offsetX and offsetY for drawing
+        function drawScaledImage(img, destX, destWidth, destHeight, imgOffsetX = 0, imgOffsetY = 0) {
             const imgRatio = img.width / img.height;
             const destRatio = destWidth / destHeight;
             
@@ -243,7 +277,8 @@
                 offsetY = (destHeight - drawHeight) / 2;
             }
             
-            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            // Apply image-specific offsets
+            ctx.drawImage(img, offsetX + imgOffsetX, offsetY + imgOffsetY, drawWidth, drawHeight);
         }
         
         // Function to draw with diagonal dividing line
@@ -255,7 +290,6 @@
             // Map 0-100 to positions that look good visually
             const position = diagonalPosition / 100;
             
-            // Create clipping paths for each image
             // First image (left side)
             ctx.save();
             ctx.beginPath();
@@ -266,8 +300,8 @@
             ctx.closePath();
             ctx.clip();
             
-            // Draw the first image (scaled to full canvas)
-            drawScaledImage(image1, 0, w, h);
+            // Draw the first image (scaled to full canvas) with its offset
+            drawScaledImage(image1, 0, w, h, image1OffsetX, image1OffsetY);
             ctx.restore();
             
             // Second image (right side)
@@ -280,9 +314,65 @@
             ctx.closePath();
             ctx.clip();
             
-            // Draw the second image (scaled to full canvas)
-            drawScaledImage(image2, 0, w, h);
+            // Draw the second image (scaled to full canvas) with its offset
+            drawScaledImage(image2, 0, w, h, image2OffsetX, image2OffsetY);
             ctx.restore();
+        }
+
+        // Dragging functionality
+        previewImage1.addEventListener('mousedown', startDrag);
+        previewImage2.addEventListener('mousedown', startDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            draggedImage = e.target;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            // Get current offset from style
+            if (draggedImage.dataset.imageId === '1') {
+                currentOffsetX = image1OffsetX;
+                currentOffsetY = image1OffsetY;
+            } else {
+                currentOffsetX = image2OffsetX;
+                currentOffsetY = image2OffsetY;
+            }
+
+            draggedImage.style.cursor = 'grabbing';
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            const newOffsetX = currentOffsetX + dx;
+            const newOffsetY = currentOffsetY + dy;
+
+            if (draggedImage.dataset.imageId === '1') {
+                image1OffsetX = newOffsetX;
+                image1OffsetY = newOffsetY;
+                previewImage1.style.left = `${newOffsetX}px`;
+                previewImage1.style.top = `${newOffsetY}px`;
+            } else {
+                image2OffsetX = newOffsetX;
+                image2OffsetY = newOffsetY;
+                previewImage2.style.left = `${newOffsetX}px`;
+                previewImage2.style.top = `${newOffsetY}px`;
+            }
+        }
+
+        function endDrag() {
+            isDragging = false;
+            if (draggedImage) {
+                draggedImage.style.cursor = 'grab';
+                draggedImage = null;
+            }
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', endDrag);
         }
     </script>
 </body>
