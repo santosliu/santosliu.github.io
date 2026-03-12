@@ -464,7 +464,7 @@
       const wmW = cw * (wmSize / 100);
       const wmH = wmW * (watermarkImg.naturalHeight / watermarkImg.naturalWidth);
       const wmX = (cw - wmW) / 2;
-      const wmY = ch - wmH - ch * 0.03;
+      const wmY = ch - wmH;
       ctx.globalAlpha = wmOpacity / 100;
       ctx.drawImage(watermarkImg, wmX, wmY, wmW, wmH);
       ctx.globalAlpha = 1;
