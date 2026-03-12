@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>社群圖片水印工具</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&family=LXGW+WenKai+TC&family=Dela+Gothic+One&family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap');
 
   :root {
     --bg: #0a0a0f;
@@ -397,6 +397,78 @@
   }
 
   .card-preview { position: relative; }
+
+  /* Text controls */
+  .text-controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .text-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 600px) { .text-row { grid-template-columns: 1fr; } }
+
+  .text-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .text-field label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .text-field input[type=text],
+  .text-field select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .text-field input[type=text]:focus,
+  .text-field select:focus { border-color: var(--accent2); }
+
+  .text-field select option { background: var(--surface2); }
+
+  .text-field input[type=color] {
+    width: 100%;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    cursor: pointer;
+    padding: 2px;
+  }
+
+  .drag-hint {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+
+  .card-preview.draggable { cursor: crosshair; }
+  .card-preview.dragging { cursor: grabbing; }
 </style>
 </head>
 <body>
@@ -433,6 +505,42 @@
     </div>
   </div>
 
+  <!-- 3. 添加文字（上傳後顯示）-->
+  <div class="section hidden" id="textSection">
+    <div class="section-label">03 — 添加文字</div>
+    <div class="text-controls">
+      <div class="text-row">
+        <div class="text-field" style="grid-column: 1 / -1;">
+          <label>文字內容</label>
+          <input type="text" id="textInput" placeholder="輸入要疊加的文字...">
+        </div>
+      </div>
+      <div class="text-row">
+        <div class="text-field">
+          <label>字體</label>
+          <select id="fontSelect">
+            <option value="Noto Sans TC">黑體（Noto Sans TC）</option>
+            <option value="Dela Gothic One">粗黑（Dela Gothic One）</option>
+            <option value="Noto Serif TC">明體（Noto Serif TC）</option>
+            <option value="Zen Maru Gothic">圓體（Zen Maru Gothic）</option>
+            <option value="LXGW WenKai TC">楷書（LXGW WenKai TC）</option>
+          </select>
+        </div>
+        <div class="text-field">
+          <label>顏色</label>
+          <input type="color" id="textColor" value="#ffffff">
+        </div>
+      </div>
+      <div class="text-row">
+        <div class="text-field" style="grid-column: 1 / -1;">
+          <label>字體大小：<span id="fontSizeVal">80</span> px（相對於輸出解析度）</label>
+          <input type="range" id="fontSizeSlider" min="20" max="300" value="80">
+        </div>
+      </div>
+      <p class="drag-hint">✦ 在下方任一卡片縮圖上拖曳，即可調整文字位置</p>
+    </div>
+  </div>
+
   <!-- Lightbox -->
   <div class="lightbox" id="lightbox">
     <button class="lightbox-close" id="lightboxClose">✕</button>
@@ -440,9 +548,9 @@
     <div class="lightbox-label" id="lightboxLabel"></div>
   </div>
 
-  <!-- 3. 格式卡片（上傳後顯示）-->
+  <!-- 4. 格式卡片（上傳後顯示）-->
   <div class="section hidden" id="cardsSection">
-    <div class="section-label">03 — 預覽 &amp; 下載</div>
+    <div class="section-label">04 — 預覽 &amp; 下載</div>
     <div class="cards-grid" id="cardsGrid"></div>
   </div>
 
@@ -468,12 +576,26 @@
   const wmSize = 100;
   let wmOpacity = 80;
 
+  // Text overlay state
+  let textContent  = '';
+  let textFont     = 'Noto Sans TC';
+  let textFontSize = 80;
+  let textColor    = '#ffffff';
+  let textPosX     = 0.5;   // 0–1 relative to canvas width
+  let textPosY     = 0.15;  // 0–1 relative to canvas height
+
   const uploadZone     = document.getElementById('uploadZone');
   const uploadBtn      = document.getElementById('uploadBtn');
   const uploadHint     = document.getElementById('uploadHint');
   const fileInput      = document.getElementById('fileInput');
   const opacitySlider  = document.getElementById('opacitySlider');
   const opacityVal     = document.getElementById('opacityVal');
+  const textSection    = document.getElementById('textSection');
+  const textInput      = document.getElementById('textInput');
+  const fontSelect     = document.getElementById('fontSelect');
+  const fontSizeSlider = document.getElementById('fontSizeSlider');
+  const fontSizeVal    = document.getElementById('fontSizeVal');
+  const textColorInput = document.getElementById('textColor');
   const lightbox       = document.getElementById('lightbox');
   const lightboxImg    = document.getElementById('lightboxImg');
   const lightboxLabel  = document.getElementById('lightboxLabel');
@@ -558,6 +680,17 @@
     const sy = (uploadedImg.naturalHeight - sh) / 2;
     ctx.drawImage(uploadedImg, sx, sy, sw, sh, 0, 0, cw, ch);
 
+    // Text overlay
+    if (textContent.trim()) {
+      ctx.save();
+      ctx.font = `${textFontSize}px '${textFont}', sans-serif`;
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(textContent, cw * textPosX, ch * textPosY);
+      ctx.restore();
+    }
+
     // Watermark center-bottom
     if (watermarkImg.complete && watermarkImg.naturalWidth > 0) {
       const wmW = cw * (wmSize / 100);
@@ -584,9 +717,15 @@
     pc.height = previewH;
     pc.getContext('2d').drawImage(oc, 0, 0, previewW, previewH);
 
-    // Enable preview click
+    // Enable preview click + drag
     previewDiv.classList.add('ready');
-    previewDiv.onclick = () => openLightbox(p);
+    if (textContent.trim()) previewDiv.classList.add('draggable');
+    else previewDiv.classList.remove('draggable');
+    previewDiv.onclick = (e) => {
+      if (!previewDiv._wasDragging) openLightbox(p);
+      previewDiv._wasDragging = false;
+    };
+    setupDrag(previewDiv, p);
 
     // Enable download
     const dlBtn = card.querySelector('.card-dl-btn');
@@ -602,6 +741,73 @@
     a.download = p.filename;
     a.click();
   }
+
+  // Drag-to-position text
+  function setupDrag(previewDiv, p) {
+    let dragging = false;
+
+    function getPos(e) {
+      const rect = previewDiv.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
+        y: Math.max(0, Math.min(1, (clientY - rect.top)  / rect.height)),
+      };
+    }
+
+    function onStart(e) {
+      if (!textContent.trim()) return;
+      dragging = true;
+      previewDiv._wasDragging = false;
+      previewDiv.classList.add('dragging');
+      e.preventDefault();
+    }
+
+    function onMove(e) {
+      if (!dragging) return;
+      previewDiv._wasDragging = true;
+      const pos = getPos(e);
+      textPosX = pos.x;
+      textPosY = pos.y;
+      renderAll();
+      e.preventDefault();
+    }
+
+    function onEnd() {
+      dragging = false;
+      previewDiv.classList.remove('dragging');
+    }
+
+    previewDiv.addEventListener('mousedown',  onStart);
+    document.addEventListener('mousemove',   onMove);
+    document.addEventListener('mouseup',     onEnd);
+    previewDiv.addEventListener('touchstart', onStart, { passive: false });
+    document.addEventListener('touchmove',   onMove,  { passive: false });
+    document.addEventListener('touchend',    onEnd);
+  }
+
+  // Text control listeners
+  textInput.addEventListener('input', () => {
+    textContent = textInput.value;
+    if (uploadedImg) renderAll();
+  });
+
+  fontSelect.addEventListener('change', () => {
+    textFont = fontSelect.value;
+    if (uploadedImg) renderAll();
+  });
+
+  fontSizeSlider.addEventListener('input', () => {
+    textFontSize = parseInt(fontSizeSlider.value);
+    fontSizeVal.textContent = textFontSize;
+    if (uploadedImg) renderAll();
+  });
+
+  textColorInput.addEventListener('input', () => {
+    textColor = textColorInput.value;
+    if (uploadedImg) renderAll();
+  });
 
   // Upload handlers
   uploadZone.addEventListener('click', e => {
@@ -642,6 +848,7 @@
         uploadHint.textContent = `已上傳：${file.name}`;
         uploadZone.style.borderColor = '';
         controlsSection.classList.remove('hidden');
+        textSection.classList.remove('hidden');
         cardsSection.classList.remove('hidden');
         renderAll();
       };
