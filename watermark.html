@@ -352,14 +352,7 @@
   <!-- 2. 調整水印（上傳後顯示）-->
   <div class="section hidden" id="controlsSection">
     <div class="section-label">02 — 調整水印</div>
-    <div class="controls-grid">
-      <div class="control-item">
-        <div class="control-header">
-          <span class="control-label">水印大小</span>
-          <span class="control-value"><span id="sizeVal">30</span> <span>% 寬度</span></span>
-        </div>
-        <input type="range" id="sizeSlider" min="10" max="80" value="30">
-      </div>
+    <div class="controls-grid" style="grid-template-columns: 1fr;">
       <div class="control-item">
         <div class="control-header">
           <span class="control-label">水印透明度</span>
@@ -395,16 +388,14 @@
 
   let uploadedImg = null;
   let watermarkImg = null;
-  let wmSize = 30;
+  const wmSize = 100;
   let wmOpacity = 80;
 
   const uploadZone     = document.getElementById('uploadZone');
   const uploadBtn      = document.getElementById('uploadBtn');
   const uploadHint     = document.getElementById('uploadHint');
   const fileInput      = document.getElementById('fileInput');
-  const sizeSlider     = document.getElementById('sizeSlider');
   const opacitySlider  = document.getElementById('opacitySlider');
-  const sizeVal        = document.getElementById('sizeVal');
   const opacityVal     = document.getElementById('opacityVal');
   const controlsSection = document.getElementById('controlsSection');
   const cardsSection   = document.getElementById('cardsSection');
@@ -569,13 +560,6 @@
     }
     errEl.textContent = msg;
   }
-
-  // Sliders
-  sizeSlider.addEventListener('input', () => {
-    wmSize = parseInt(sizeSlider.value);
-    sizeVal.textContent = wmSize;
-    if (uploadedImg) renderAll();
-  });
 
   opacitySlider.addEventListener('input', () => {
     wmOpacity = parseInt(opacitySlider.value);
