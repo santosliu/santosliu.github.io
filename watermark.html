@@ -44,7 +44,7 @@
   .container {
     position: relative;
     z-index: 1;
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 24px;
   }
@@ -75,7 +75,6 @@
     letter-spacing: 0.05em;
   }
 
-  /* Section titles */
   .section-label {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
@@ -86,55 +85,7 @@
     margin-bottom: 12px;
   }
 
-  .section {
-    margin-bottom: 28px;
-  }
-
-  /* Platform grid */
-  .platform-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .platform-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-  }
-
-  .platform-btn:hover {
-    background: var(--surface2);
-    border-color: var(--accent2);
-  }
-
-  .platform-btn.active {
-    background: var(--surface2);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .platform-btn .p-icon { font-size: 16px; }
-
-  .platform-btn .p-info { display: flex; flex-direction: column; gap: 2px; }
-
-  .platform-btn .p-name { font-weight: 700; }
-
-  .platform-btn .p-size {
-    font-size: 9px;
-    color: var(--text-dim);
-  }
-
-  .platform-btn.active .p-size { color: var(--accent); opacity: 0.7; }
+  .section { margin-bottom: 28px; }
 
   /* Upload zone */
   .upload-zone {
@@ -155,22 +106,18 @@
     inset: 0;
     background: linear-gradient(135deg, rgba(255,62,108,0) 0%, rgba(0,229,255,0) 100%);
     transition: all 0.3s;
+    pointer-events: none;
   }
 
-  .upload-zone:hover:not(.disabled),
+  .upload-zone:hover,
   .upload-zone.drag-over {
     border-color: var(--accent2);
     background: var(--surface2);
   }
 
-  .upload-zone:hover:not(.disabled)::after,
+  .upload-zone:hover::after,
   .upload-zone.drag-over::after {
     background: linear-gradient(135deg, rgba(255,62,108,0.05) 0%, rgba(0,229,255,0.05) 100%);
-  }
-
-  .upload-zone.disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
   }
 
   .upload-icon { font-size: 40px; margin-bottom: 10px; display: block; }
@@ -182,7 +129,7 @@
     margin-bottom: 6px;
   }
 
-  .upload-zone p {
+  .upload-zone > p {
     color: var(--text-dim);
     font-size: 11px;
   }
@@ -202,6 +149,8 @@
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
+    z-index: 1;
   }
 
   .upload-btn:hover {
@@ -211,33 +160,6 @@
   }
 
   #fileInput { display: none; }
-
-  /* Canvas preview */
-  .preview-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-  }
-
-  #previewCanvas {
-    max-width: 100%;
-    max-height: 600px;
-    border-radius: 4px;
-    display: none;
-  }
-
-  .preview-placeholder {
-    color: var(--text-dim);
-    font-size: 12px;
-    text-align: center;
-  }
-
-  .preview-placeholder span { font-size: 32px; display: block; margin-bottom: 8px; }
 
   /* Controls */
   .controls-grid {
@@ -310,69 +232,101 @@
     transform: scale(1.2);
   }
 
-  /* Format buttons */
-  .fmt-group {
-    display: flex;
-    gap: 8px;
+  /* Format cards */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
   }
 
-  .fmt-btn {
-    flex: 1;
-    padding: 10px;
+  .format-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: all 0.15s;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s;
+  }
+
+  .format-card:hover { border-color: var(--accent2); }
+
+  .card-preview {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 160px;
+    overflow: hidden;
+  }
+
+  .card-preview canvas {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .card-placeholder {
+    color: var(--text-dim);
+    font-size: 10px;
     text-align: center;
+    line-height: 1.8;
   }
 
-  .fmt-btn:hover {
-    background: var(--surface2);
-    border-color: var(--accent2);
+  .card-info {
+    padding: 10px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
   }
 
-  .fmt-btn.active {
-    background: var(--surface2);
-    border-color: var(--accent3);
+  .card-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .card-size {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .card-filename {
+    font-size: 9px;
     color: var(--accent3);
+    opacity: 0.7;
+    margin-top: 2px;
   }
 
-  /* Download button */
-  #downloadBtn {
+  .card-dl-btn {
     display: block;
     width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--accent), #c0175a);
-    color: white;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 15px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 8px;
-  }
-
-  #downloadBtn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(255,62,108,0.4);
-  }
-
-  #downloadBtn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
+    padding: 9px;
     background: var(--surface2);
+    border: none;
+    border-top: 1px solid var(--border);
     color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: not-allowed;
+    transition: all 0.15s;
   }
+
+  .card-dl-btn.ready {
+    color: var(--accent2);
+    cursor: pointer;
+  }
+
+  .card-dl-btn.ready:hover {
+    background: var(--accent2);
+    color: #000;
+  }
+
+  .hidden { display: none; }
 </style>
 </head>
 <body>
@@ -380,42 +334,24 @@
 
   <header>
     <h1><span>水印</span><em>合成</em>工具</h1>
-    <p>上傳圖片，自動加上 ludens.png 水印並輸出原始解析度</p>
+    <p>上傳圖片，自動輸出所有社群格式</p>
   </header>
 
-  <!-- 1. 社群格式選擇器 -->
+  <!-- 1. 上傳圖片 -->
   <div class="section">
-    <div class="section-label">01 — 選擇社群格式</div>
-    <div class="platform-grid" id="platformGrid"></div>
-  </div>
-
-  <!-- 2. 上傳區 -->
-  <div class="section">
-    <div class="section-label">02 — 上傳圖片</div>
-    <div class="upload-zone disabled" id="uploadZone">
+    <div class="section-label">01 — 上傳圖片</div>
+    <div class="upload-zone" id="uploadZone">
       <span class="upload-icon">🖼️</span>
       <h2>拖曳或點選上傳圖片</h2>
-      <p>請先選擇社群格式，再上傳圖片</p>
-      <button class="upload-btn" id="uploadBtn" disabled>選擇圖片</button>
+      <p id="uploadHint">上傳後自動產出全部社群格式</p>
+      <button class="upload-btn" id="uploadBtn">選擇圖片</button>
       <input type="file" id="fileInput" accept="image/*">
     </div>
   </div>
 
-  <!-- 3. Canvas 預覽 -->
-  <div class="section">
-    <div class="section-label">03 — 預覽</div>
-    <div class="preview-wrap">
-      <canvas id="previewCanvas"></canvas>
-      <div class="preview-placeholder" id="previewPlaceholder">
-        <span>🎨</span>
-        上傳圖片後即時預覽合成結果
-      </div>
-    </div>
-  </div>
-
-  <!-- 4. 調整控制項 -->
-  <div class="section">
-    <div class="section-label">04 — 調整水印</div>
+  <!-- 2. 調整水印（上傳後顯示）-->
+  <div class="section hidden" id="controlsSection">
+    <div class="section-label">02 — 調整水印</div>
     <div class="controls-grid">
       <div class="control-item">
         <div class="control-header">
@@ -434,183 +370,100 @@
     </div>
   </div>
 
-  <!-- 5. 輸出格式 -->
-  <div class="section">
-    <div class="section-label">05 — 輸出格式</div>
-    <div class="fmt-group">
-      <button class="fmt-btn active" data-fmt="jpg">JPG</button>
-      <button class="fmt-btn" data-fmt="png">PNG</button>
-      <button class="fmt-btn" data-fmt="webp">WebP</button>
-    </div>
+  <!-- 3. 格式卡片（上傳後顯示）-->
+  <div class="section hidden" id="cardsSection">
+    <div class="section-label">03 — 預覽 &amp; 下載</div>
+    <div class="cards-grid" id="cardsGrid"></div>
   </div>
 
-  <!-- 6. 下載按鈕 -->
-  <button id="downloadBtn" disabled>下載圖片（原始解析度）</button>
-
 </div>
-
 <script>
   const platforms = [
-    { id: 'ig-post-square',    name: 'IG 貼文 (方形)',   w: 1080, h: 1080, icon: '📷', color: '#e1306c' },
-    { id: 'ig-post-portrait',  name: 'IG 貼文 (直式)',   w: 1080, h: 1350, icon: '📷', color: '#e1306c' },
-    { id: 'ig-post-landscape', name: 'IG 貼文 (橫式)',   w: 1080, h:  566, icon: '📷', color: '#e1306c' },
-    { id: 'ig-stories',        name: 'IG/限時動態',      w: 1080, h: 1920, icon: '📱', color: '#e1306c' },
-    { id: 'fb-post',           name: 'FB 貼文',          w: 1200, h:  630, icon: '📘', color: '#1877f2' },
-    { id: 'fb-stories',        name: 'FB Stories',       w: 1080, h: 1920, icon: '📱', color: '#1877f2' },
-    { id: 'yt-shorts',         name: 'YT Shorts 封面',   w: 1080, h: 1920, icon: '📱', color: '#ff0000' },
-    { id: 'tw-post',           name: 'X 貼文圖片',       w: 1200, h:  675, icon: '🐦', color: '#1d9bf0' },
-    { id: 'line-oa-cover',     name: 'LINE OA 封面',     w: 1080, h:  878, icon: '💬', color: '#00c300' },
-    { id: 'threads-post',      name: 'Threads 貼文',     w: 1080, h: 1080, icon: '🧵', color: '#101010' },
-    { id: 'tiktok-cover',      name: 'TikTok 封面',      w: 1080, h: 1920, icon: '🎵', color: '#ff0050' },
-    { id: 'linkedin-post',     name: 'LinkedIn 貼文',    w: 1200, h:  627, icon: '💼', color: '#0a66c2' },
+    { id: 'ig-post-square',    name: 'IG 貼文 (方形)',   w: 1080, h: 1080, icon: '📷', filename: 'ig-square.png' },
+    { id: 'ig-post-portrait',  name: 'IG 貼文 (直式)',   w: 1080, h: 1350, icon: '📷', filename: 'ig-portrait.png' },
+    { id: 'ig-post-landscape', name: 'IG 貼文 (橫式)',   w: 1080, h:  566, icon: '📷', filename: 'ig-landscape.png' },
+    { id: 'ig-stories',        name: 'IG/限時動態',      w: 1080, h: 1920, icon: '📱', filename: 'ig-stories.png' },
+    { id: 'fb-post',           name: 'FB 貼文',          w: 1200, h:  630, icon: '📘', filename: 'facebook.png' },
+    { id: 'fb-stories',        name: 'FB Stories',       w: 1080, h: 1920, icon: '📱', filename: 'fb-stories.png' },
+    { id: 'yt-shorts',         name: 'YT Shorts 封面',   w: 1080, h: 1920, icon: '📱', filename: 'youtube-shorts.png' },
+    { id: 'tw-post',           name: 'X 貼文圖片',       w: 1200, h:  675, icon: '🐦', filename: 'twitter.png' },
+    { id: 'line-oa-cover',     name: 'LINE OA 封面',     w: 1080, h:  878, icon: '💬', filename: 'line.png' },
+    { id: 'threads-post',      name: 'Threads 貼文',     w: 1080, h: 1080, icon: '🧵', filename: 'threads.png' },
+    { id: 'tiktok-cover',      name: 'TikTok 封面',      w: 1080, h: 1920, icon: '🎵', filename: 'tiktok.png' },
+    { id: 'linkedin-post',     name: 'LinkedIn 貼文',    w: 1200, h:  627, icon: '💼', filename: 'linkedin.png' },
   ];
 
-  // State
-  let selectedPlatform = null;
   let uploadedImg = null;
   let watermarkImg = null;
-  let outputFmt = 'jpg';
   let wmSize = 30;
   let wmOpacity = 80;
 
-  // Elements
-  const platformGrid  = document.getElementById('platformGrid');
-  const uploadZone    = document.getElementById('uploadZone');
-  const uploadBtn     = document.getElementById('uploadBtn');
-  const fileInput     = document.getElementById('fileInput');
-  const previewCanvas = document.getElementById('previewCanvas');
-  const previewPlaceholder = document.getElementById('previewPlaceholder');
-  const sizeSlider    = document.getElementById('sizeSlider');
-  const opacitySlider = document.getElementById('opacitySlider');
-  const sizeVal       = document.getElementById('sizeVal');
-  const opacityVal    = document.getElementById('opacityVal');
-  const downloadBtn   = document.getElementById('downloadBtn');
+  const uploadZone     = document.getElementById('uploadZone');
+  const uploadBtn      = document.getElementById('uploadBtn');
+  const uploadHint     = document.getElementById('uploadHint');
+  const fileInput      = document.getElementById('fileInput');
+  const sizeSlider     = document.getElementById('sizeSlider');
+  const opacitySlider  = document.getElementById('opacitySlider');
+  const sizeVal        = document.getElementById('sizeVal');
+  const opacityVal     = document.getElementById('opacityVal');
+  const controlsSection = document.getElementById('controlsSection');
+  const cardsSection   = document.getElementById('cardsSection');
+  const cardsGrid      = document.getElementById('cardsGrid');
 
-  // Fixed output canvas (reuse across renders)
-  const outputCanvas = document.createElement('canvas');
+  // Per-format output canvases (reused across re-renders)
+  const outputCanvases = {};
+  platforms.forEach(p => { outputCanvases[p.id] = document.createElement('canvas'); });
 
-  // Build platform buttons
-  platforms.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'platform-btn';
-    btn.dataset.id = p.id;
-    btn.innerHTML = `
-      <span class="p-icon">${p.icon}</span>
-      <span class="p-info">
-        <span class="p-name">${p.name}</span>
-        <span class="p-size">${p.w} × ${p.h}</span>
-      </span>
-    `;
-    btn.addEventListener('click', () => selectPlatform(p, btn));
-    platformGrid.appendChild(btn);
-  });
-
-  function selectPlatform(p, btn) {
-    downloadBtn.disabled = true;
-    selectedPlatform = p;
-    document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    // Enable upload
-    uploadZone.classList.remove('disabled');
-    uploadBtn.disabled = false;
-    uploadZone.querySelector('p').textContent = `格式：${p.name}（${p.w} × ${p.h}）`;
-    // Re-render if image already loaded
-    if (uploadedImg) renderCanvas();
-  }
-
-  // Load watermark image once
+  // Load watermark
   watermarkImg = new Image();
   watermarkImg.src = 'ludens.png';
-  watermarkImg.onload = () => { if (uploadedImg && selectedPlatform) renderCanvas(); };
-  watermarkImg.onerror = () => {
-    console.error('ludens.png 載入失敗，水印將不會顯示');
-  };
+  watermarkImg.onload = () => { if (uploadedImg) renderAll(); };
+  watermarkImg.onerror = () => console.error('ludens.png 載入失敗，水印將不顯示');
 
-  // Upload zone interactions
-  uploadZone.addEventListener('click', e => {
-    if (uploadZone.classList.contains('disabled')) return;
-    if (e.target === uploadBtn || e.target.closest('#uploadBtn')) return;
-    fileInput.click();
+  // Build format cards
+  platforms.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'format-card';
+    card.dataset.id = p.id;
+
+    const previewDiv = document.createElement('div');
+    previewDiv.className = 'card-preview';
+    previewDiv.innerHTML = `<div class="card-placeholder">${p.icon}<br>${p.w} × ${p.h}</div>`;
+
+    const info = document.createElement('div');
+    info.className = 'card-info';
+    info.innerHTML = `
+      <div class="card-name">${p.icon} ${p.name}</div>
+      <div class="card-size">${p.w} × ${p.h} px</div>
+      <div class="card-filename">${p.filename}</div>
+    `;
+
+    const dlBtn = document.createElement('button');
+    dlBtn.className = 'card-dl-btn';
+    dlBtn.textContent = '↓ 下載';
+    dlBtn.disabled = true;
+    dlBtn.addEventListener('click', () => downloadFormat(p));
+
+    card.appendChild(previewDiv);
+    card.appendChild(info);
+    card.appendChild(dlBtn);
+    cardsGrid.appendChild(card);
   });
 
-  uploadBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!uploadBtn.disabled) fileInput.click();
-  });
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) loadImage(fileInput.files[0]);
-  });
-
-  uploadZone.addEventListener('dragover', e => {
-    e.preventDefault();
-    if (!uploadZone.classList.contains('disabled')) uploadZone.classList.add('drag-over');
-  });
-
-  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-
-  uploadZone.addEventListener('drop', e => {
-    e.preventDefault();
-    uploadZone.classList.remove('drag-over');
-    if (uploadZone.classList.contains('disabled')) return;
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) loadImage(file);
-  });
-
-  function showUploadError(msg) {
-    uploadZone.style.borderColor = 'var(--accent)';
-    let errEl = uploadZone.querySelector('.upload-error-msg');
-    if (!errEl) {
-      errEl = document.createElement('p');
-      errEl.className = 'upload-error-msg';
-      errEl.style.color = 'var(--accent)';
-      errEl.style.marginTop = '8px';
-      uploadZone.appendChild(errEl);
-    }
-    errEl.textContent = msg;
+  function renderAll() {
+    platforms.forEach(p => renderFormat(p));
   }
 
-  function clearUploadError() {
-    uploadZone.style.borderColor = '';
-    const errEl = uploadZone.querySelector('.upload-error-msg');
-    if (errEl) errEl.remove();
-  }
+  function renderFormat(p) {
+    const cw = p.w, ch = p.h;
+    const oc = outputCanvases[p.id];
+    oc.width = cw;
+    oc.height = ch;
+    const ctx = oc.getContext('2d');
 
-  function loadImage(file) {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => {
-        clearUploadError();
-        uploadedImg = img;
-        renderCanvas();
-      };
-      img.onerror = () => {
-        showUploadError('圖片載入失敗，請選擇有效的圖片檔案');
-      };
-      img.src = ev.target.result;
-    };
-    reader.onerror = () => {
-      showUploadError('圖片載入失敗，請選擇有效的圖片檔案');
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function renderCanvas() {
-    if (!uploadedImg || !selectedPlatform) return;
-
-    const cw = selectedPlatform.w;
-    const ch = selectedPlatform.h;
-
-    // Output canvas (full resolution, reuse fixed instance)
-    outputCanvas.width  = cw;
-    outputCanvas.height = ch;
-    const ctx = outputCanvas.getContext('2d');
-
-    // Center-crop image
+    // Center-crop
     const scale = Math.max(cw / uploadedImg.naturalWidth, ch / uploadedImg.naturalHeight);
-    const sw = cw / scale;
-    const sh = ch / scale;
+    const sw = cw / scale, sh = ch / scale;
     const sx = (uploadedImg.naturalWidth  - sw) / 2;
     const sy = (uploadedImg.naturalHeight - sh) / 2;
     ctx.drawImage(uploadedImg, sx, sy, sw, sh, 0, 0, cw, ch);
@@ -620,73 +473,114 @@
       const wmW = cw * (wmSize / 100);
       const wmH = wmW * (watermarkImg.naturalHeight / watermarkImg.naturalWidth);
       const wmX = (cw - wmW) / 2;
-      const padding = ch * 0.03;
-      const wmY = ch - wmH - padding;
+      const wmY = ch - wmH - ch * 0.03;
       ctx.globalAlpha = wmOpacity / 100;
       ctx.drawImage(watermarkImg, wmX, wmY, wmW, wmH);
       ctx.globalAlpha = 1;
     }
 
-    // Copy to preview canvas (scaled to max 600px wide)
-    const maxW = Math.min(600, cw);
-    const scale2 = maxW / cw;
-    previewCanvas.width  = cw * scale2;
-    previewCanvas.height = ch * scale2;
-    const pCtx = previewCanvas.getContext('2d');
-    pCtx.drawImage(outputCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+    // Update card thumbnail (fixed 160px height)
+    const card = cardsGrid.querySelector(`[data-id="${p.id}"]`);
+    const previewDiv = card.querySelector('.card-preview');
+    let pc = previewDiv.querySelector('canvas');
+    if (!pc) {
+      previewDiv.innerHTML = '';
+      pc = document.createElement('canvas');
+      previewDiv.appendChild(pc);
+    }
+    const previewH = 160;
+    const previewW = Math.round(cw * (previewH / ch));
+    pc.width  = previewW;
+    pc.height = previewH;
+    pc.getContext('2d').drawImage(oc, 0, 0, previewW, previewH);
 
-    previewCanvas.style.display = 'block';
-    previewPlaceholder.style.display = 'none';
+    // Enable download
+    const dlBtn = card.querySelector('.card-dl-btn');
+    dlBtn.disabled = false;
+    dlBtn.classList.add('ready');
+  }
 
-    // Store output canvas for download
-    previewCanvas._outputCanvas = outputCanvas;
+  function downloadFormat(p) {
+    const oc = outputCanvases[p.id];
+    if (!oc.width) return;
+    const a = document.createElement('a');
+    a.href = oc.toDataURL('image/png');
+    a.download = p.filename;
+    a.click();
+  }
 
-    downloadBtn.disabled = false;
+  // Upload handlers
+  uploadZone.addEventListener('click', e => {
+    if (e.target === uploadBtn || e.target.closest('#uploadBtn')) return;
+    fileInput.click();
+  });
+
+  uploadBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) loadImage(fileInput.files[0]);
+  });
+
+  uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('drag-over');
+  });
+
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadImage(file);
+  });
+
+  function loadImage(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        uploadedImg = img;
+        uploadZone.querySelector('h2').textContent = '點選或拖曳以重新上傳';
+        uploadHint.textContent = `已上傳：${file.name}`;
+        uploadZone.style.borderColor = '';
+        controlsSection.classList.remove('hidden');
+        cardsSection.classList.remove('hidden');
+        renderAll();
+      };
+      img.onerror = () => showUploadError('圖片載入失敗，請選擇有效的圖片檔案');
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => showUploadError('圖片載入失敗，請選擇有效的圖片檔案');
+    reader.readAsDataURL(file);
+  }
+
+  function showUploadError(msg) {
+    uploadZone.style.borderColor = 'var(--accent)';
+    let errEl = uploadZone.querySelector('.upload-error-msg');
+    if (!errEl) {
+      errEl = document.createElement('p');
+      errEl.className = 'upload-error-msg';
+      errEl.style.cssText = 'color:var(--accent);margin-top:8px;font-size:11px';
+      uploadZone.appendChild(errEl);
+    }
+    errEl.textContent = msg;
   }
 
   // Sliders
   sizeSlider.addEventListener('input', () => {
     wmSize = parseInt(sizeSlider.value);
     sizeVal.textContent = wmSize;
-    if (uploadedImg && selectedPlatform) renderCanvas();
+    if (uploadedImg) renderAll();
   });
 
   opacitySlider.addEventListener('input', () => {
     wmOpacity = parseInt(opacitySlider.value);
     opacityVal.textContent = wmOpacity;
-    if (uploadedImg && selectedPlatform) renderCanvas();
-  });
-
-  // Output format buttons
-  document.querySelectorAll('.fmt-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      outputFmt = btn.dataset.fmt;
-    });
-  });
-
-  function isWebpSupported() {
-    const c = document.createElement('canvas');
-    c.width = 1; c.height = 1;
-    return c.toDataURL('image/webp').startsWith('data:image/webp');
-  }
-
-  // Download
-  downloadBtn.addEventListener('click', () => {
-    if (outputCanvas.width === 0) return;
-    const mimeMap = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
-    let fmt = outputFmt;
-    let ext = outputFmt;
-    if (fmt === 'webp' && !isWebpSupported()) {
-      fmt = 'png';
-      ext = 'png';
-    }
-    const url = outputCanvas.toDataURL(mimeMap[fmt], 0.95);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `watermark.${ext}`;
-    a.click();
+    if (uploadedImg) renderAll();
   });
 </script>
 </body>
