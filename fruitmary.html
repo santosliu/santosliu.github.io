@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>萊姆小瑪莉</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'GenSenRounded';
+            src: url('assets/fonts/GenSenRounded2TC-H.woff2') format('woff2');
+            font-weight: 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('assets/background.png') center center / cover no-repeat;
+            background-color: #1a1a2e;
+        }
+
+        .game-container {
+            position: relative;
+            width: 95vw;
+            max-width: 900px;
+        }
+
+        /* 標題 */
+        .game-title {
+            text-align: center;
+            font-family: 'GenSenRounded', 'Noto Sans TC', sans-serif;
+            font-size: 50px;
+            font-weight: 900;
+            margin-top: 80px;
+            margin-bottom: -50px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-title .lime {
+            color: #c8e6a0;
+        }
+
+        .game-title .mary {
+            color: #fff5e6;
+        }
+
+        /* 主遊戲區 */
+        .game-board {
+            position: relative;
+            background: url('assets/plate.png') center center / 100% 100% no-repeat;
+            padding: 80px 75px 80px 75px;
+            aspect-ratio: 1.6 / 1;
+        }
+
+        /* 格子網格 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: clamp(6px, 1.2vw, 12px);
+            height: 100%;
+        }
+
+        /* 獎品格子 */
+        .prize-cell {
+            position: relative;
+            background: url('assets/icon_base.png') center center / 100% 100% no-repeat;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            aspect-ratio: 1 / 1.1;
+        }
+
+        .prize-cell.spinning {
+            background: url('assets/icon_spin.png') center center / 100% 100% no-repeat;
+        }
+
+        .prize-cell.highlighted {
+            background: url('assets/icon_selected.png') center center / 100% 100% no-repeat;
+        }
+
+        .prize-cell.highlighted::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: url('assets/selected_halo.png') center center / 100% 100% no-repeat;
+            pointer-events: none;
+        }
+
+        .prize-icon {
+            font-size: clamp(24px, 4vw, 40px);
+            line-height: 1;
+        }
+
+        .prize-value {
+            font-size: clamp(12px, 1.8vw, 16px);
+            font-weight: 900;
+            color: #5a3d1a;
+            margin-top: 2px;
+        }
+
+        /* 中央控制區域 */
+        .center-area {
+            position: absolute;
+            top: 49%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(10px, 2vw, 20px);
+        }
+
+        /* 倒數計時 */
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            /* background: rgba(0, 0, 0, 0.5); 移除背景 */
+            padding: 8px 20px;
+            border-radius: 20px;
+        }
+
+        .timer-icon {
+            width: clamp(16px, 2.5vw, 24px);
+            height: clamp(16px, 2.5vw, 24px);
+        }
+
+        .timer-text {
+            color: #fff;
+            font-size: clamp(14px, 2vw, 20px);
+            font-weight: 700;
+        }
+
+        /* 按鈕區域 */
+        .buttons-container {
+            display: flex;
+            gap: clamp(20px, 4vw, 40px);
+        }
+
+        .spin-button-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cost-display {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cost-display img {
+            width: clamp(16px, 2.5vw, 22px);
+            height: clamp(16px, 2.5vw, 22px);
+        }
+
+        .cost-display span {
+            color: #ff5636;
+            font-size: clamp(14px, 2vw, 18px);
+            font-weight: 700;
+        }
+
+        .spin-button {
+            background: url('assets/button.png') center center / 100% 100% no-repeat;
+            border: none;
+            padding: clamp(5px, 1.5vw, 10px) clamp(30px, 5vw, 50px) clamp(15px, 1.5vw, 20px);
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: clamp(16px, 2.5vw, 22px);
+            font-weight: 900;
+            color: #eff6ed;
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.1s ease;
+            min-width: clamp(100px, 15vw, 140px);
+        }
+
+        .spin-button:hover {
+            transform: scale(1.05);
+        }
+
+        .spin-button:active,
+        .spin-button.pressed {
+            background-image: url('assets/button_press.png');
+            transform: scale(0.98);
+        }
+
+        .spin-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spin-button:disabled.pressed {
+            opacity: 1;
+            background-image: url('assets/button_press.png');
+            transform: scale(0.98);
+        }
+
+        /* 隱藏中央的格子 */
+        .empty-cell {
+            visibility: hidden;
+        }
+
+        /* 響應式調整 */
+        @media (max-width: 600px) {
+            .game-board {
+                padding: 25px 15px;
+            }
+
+            .prize-cell {
+                border-radius: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <h1 class="game-title">
+            <span class="lime">萊姆</span><span class="mary">小瑪莉</span>
+        </h1>
+
+        <div class="game-board">
+            <div class="grid-container" id="gridContainer">
+                <!-- 格子由 JavaScript 生成 -->
+            </div>
+
+            <div class="center-area">
+                <div class="timer-container">
+                    <img src="assets/clock.png" alt="clock" class="timer-icon">
+                    <span class="timer-text" id="timerText">11 小時59分59秒</span>
+                </div>
+
+                <div class="buttons-container">
+                    <div class="spin-button-wrapper">
+                        <div class="cost-display">
+                            <img src="assets/coin.png" alt="coin">
+                            <span>100</span>
+                        </div>
+                        <button class="spin-button" id="btnSpin1" onclick="startSpin(1)">轉 X1</button>
+                    </div>
+
+                    <div class="spin-button-wrapper">
+                        <div class="cost-display">
+                            <img src="assets/coin.png" alt="coin">
+                            <span>1,000</span>
+                        </div>
+                        <button class="spin-button" id="btnSpin10" onclick="startSpin(10)">轉 X10</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 遊戲配置 ====================
+        const GRID_COLS = 8;
+        const GRID_ROWS = 4;
+
+        // 獎品配置 - 20個獎品圍成矩形
+        const PRIZES = [];
+        for (let i = 0; i < 20; i++) {
+            PRIZES.push({ emoji: '🎁', name: '禮物', value: 999 });
+        }
+
+        // 定義哪些格子是邊框（順時針順序）
+        // 格子索引對照（8x4 網格）：
+        // 上排：0-7
+        // 右邊：15, 23
+        // 下排：31-24 (倒序)
+        // 左邊：16, 8
+        const BORDER_POSITIONS = [
+            // 上排 (左到右) - 索引 0-7
+            0, 1, 2, 3, 4, 5, 6, 7,
+            // 右邊 (上到下) - 索引 8-9
+            15, 23,
+            // 下排 (右到左) - 索引 10-17
+            31, 30, 29, 28, 27, 26, 25, 24,
+            // 左邊 (下到上) - 索引 18-19
+            16, 8
+        ];
+
+        // 中央區域的格子（要隱藏的）
+        const CENTER_POSITIONS = [
+            9, 10, 11, 12, 13, 14,
+            17, 18, 19, 20, 21, 22
+        ];
+
+        // ==================== 遊戲狀態 ====================
+        const gameState = {
+            credit: 1000,
+            isSpinning: false,
+            multiSpinRemaining: 0,
+            currentHighlight: -1,
+            lastStopIndex: 0,
+            activeButton: null  // 記錄按下的按鈕
+        };
+
+        // ==================== 初始化 ====================
+        function initGame() {
+            createGrid();
+            updateHighlight(-1);
+        }
+
+        function createGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+
+            for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
+                const cell = document.createElement('div');
+
+                // 檢查這個格子是否在邊框上
+                const prizeIndex = BORDER_POSITIONS.indexOf(i);
+
+                if (prizeIndex !== -1) {
+                    // 這是獎品格子
+                    const prize = PRIZES[prizeIndex];
+                    cell.className = 'prize-cell';
+                    cell.dataset.prizeIndex = prizeIndex;
+
+                    cell.innerHTML = `
+                        <div class="prize-icon">${prize.emoji}</div>
+                        <div class="prize-value">${prize.value}</div>
+                    `;
+                } else if (CENTER_POSITIONS.includes(i)) {
+                    // 中央區域，隱藏
+                    cell.className = 'prize-cell empty-cell';
+                } else {
+                    // 其他格子（理論上不應該有）
+                    cell.className = 'prize-cell empty-cell';
+                }
+
+                container.appendChild(cell);
+            }
+        }
+
+        // ==================== 高亮效果 ====================
+        function updateHighlight(prizeIndex) {
+            // 移除所有高亮
+            document.querySelectorAll('.prize-cell.highlighted').forEach(cell => {
+                cell.classList.remove('highlighted');
+            });
+
+            // 添加新高亮
+            if (prizeIndex >= 0 && prizeIndex < PRIZES.length) {
+                const cell = document.querySelector(`[data-prize-index="${prizeIndex}"]`);
+                if (cell) {
+                    cell.classList.add('highlighted');
+                }
+            }
+
+            gameState.currentHighlight = prizeIndex;
+        }
+
+        // ==================== 遊戲邏輯 ====================
+        function startSpin(times) {
+            const cost = times === 1 ? 100 : 1000;
+            if (gameState.isSpinning || gameState.credit < cost) return;
+
+            console.log(`[startSpin] 開始轉動 times=${times}, cost=${cost}`);
+
+            // 記錄並設置按下的按鈕狀態
+            gameState.activeButton = times === 1 ? 'btnSpin1' : 'btnSpin10';
+            document.getElementById(gameState.activeButton).classList.add('pressed');
+
+            // 所有格子換成 spin 底圖
+            document.querySelectorAll('.prize-cell[data-prize-index]').forEach(cell => {
+                cell.classList.add('spinning');
+            });
+
+            updateHighlight(-1);
+            gameState.credit -= cost;
+            gameState.multiSpinRemaining = times;
+            gameState.isSpinning = true;
+            updateButtonStates();
+
+            runSingleSpin();
+        }
+
+        function runSingleSpin() {
+            if (gameState.multiSpinRemaining <= 0) {
+                gameState.isSpinning = false;
+                updateButtonStates();
+                return;
+            }
+
+            // 隨機目標
+            const targetIndex = Math.floor(Math.random() * PRIZES.length);
+
+            let currentIndex = gameState.lastStopIndex;
+            let spinCount = 0;
+
+            // 計算步數：至少轉2圈 + 到目標的距離
+            const minSpins = PRIZES.length * 2;
+            const stepsToTarget = (targetIndex - currentIndex + PRIZES.length) % PRIZES.length;
+            const totalSpins = minSpins + stepsToTarget;
+
+            console.log(`[runSingleSpin] 目標=${targetIndex}, 總步數=${totalSpins}`);
+
+            // 動畫參數
+            const minDelay = 35;
+            const maxDelay = 400;
+            const accelPhase = 0.15;
+            const cruisePhase = 0.55;
+
+            let lastTime = 0;
+
+            const animate = (currentTime) => {
+                if (!lastTime) lastTime = currentTime;
+
+                const progress = spinCount / totalSpins;
+
+                let delay;
+                if (progress < accelPhase) {
+                    const t = progress / accelPhase;
+                    const eased = t * (2 - t);
+                    delay = maxDelay - (maxDelay - minDelay) * eased;
+                } else if (progress < cruisePhase) {
+                    delay = minDelay;
+                } else {
+                    const t = (progress - cruisePhase) / (1 - cruisePhase);
+                    const eased = t * t;
+                    delay = minDelay + (maxDelay - minDelay) * eased;
+                }
+
+                const elapsed = currentTime - lastTime;
+
+                if (elapsed >= delay) {
+                    currentIndex = (currentIndex + 1) % PRIZES.length;
+                    spinCount++;
+                    updateHighlight(currentIndex);
+                    lastTime = currentTime;
+
+                    if (spinCount >= totalSpins) {
+                        finishSingleSpin(currentIndex);
+                        return;
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            };
+
+            requestAnimationFrame(animate);
+        }
+
+        function finishSingleSpin(finalIndex) {
+            const prize = PRIZES[finalIndex];
+            console.log(`[finishSingleSpin] 停在=${finalIndex}, 獎品=${prize.emoji} ${prize.value}`);
+
+            gameState.credit += prize.value;
+            gameState.multiSpinRemaining--;
+            gameState.lastStopIndex = finalIndex;
+
+            // 閃爍效果
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                if (flashCount % 2 === 0) {
+                    updateHighlight(finalIndex);
+                } else {
+                    updateHighlight(-1);
+                }
+                flashCount++;
+
+                if (flashCount >= 6) {
+                    clearInterval(flashInterval);
+                    updateHighlight(finalIndex);
+
+                    const nextDelay = gameState.multiSpinRemaining > 0 ? 600 : 1000;
+                    setTimeout(() => {
+                        if (gameState.multiSpinRemaining > 0) {
+                            runSingleSpin();
+                        } else {
+                            gameState.isSpinning = false;
+                            updateButtonStates();
+                        }
+                    }, nextDelay);
+                }
+            }, 100);
+        }
+
+        // ==================== UI 更新 ====================
+        function updateButtonStates() {
+            const btn1 = document.getElementById('btnSpin1');
+            const btn10 = document.getElementById('btnSpin10');
+
+            btn1.disabled = gameState.isSpinning || gameState.credit < 100;
+            btn10.disabled = gameState.isSpinning || gameState.credit < 1000;
+
+            // spin 結束時移除 pressed 狀態
+            if (!gameState.isSpinning && gameState.activeButton) {
+                document.getElementById(gameState.activeButton).classList.remove('pressed');
+                gameState.activeButton = null;
+
+                // 移除所有非選中格子的 spinning 狀態
+                document.querySelectorAll('.prize-cell[data-prize-index]').forEach(cell => {
+                    if (!cell.classList.contains('highlighted')) {
+                        cell.classList.remove('spinning');
+                    }
+                });
+            }
+        }
+
+        // ==================== 倒數計時 ====================
+        // 目標時間：2026/02/07 12:00
+        const targetDate = new Date('2026-02-07T12:00:00').getTime();
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                document.getElementById('timerText').textContent = "0 小時00分00秒";
+                return;
+            }
+
+            // 計算總秒數差
+            const totalSeconds = Math.floor(distance / 1000);
+
+            // 計算天、時、分、秒
+            const days = Math.floor(totalSeconds / (3600 * 24));
+            const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            let timeString = '';
+            if (days > 0) {
+                timeString = `${days} 天 ${hours} 小時${minutes.toString().padStart(2, '0')}分${seconds.toString().padStart(2, '0')}秒`;
+            } else {
+                timeString = `${hours} 小時${minutes.toString().padStart(2, '0')}分${seconds.toString().padStart(2, '0')}秒`;
+            }
+
+            document.getElementById('timerText').textContent = timeString;
+        }
+
+        // 立即執行一次以防止初始延遲
+        updateTimer();
+        setInterval(updateTimer, 1000);
+
+        // ==================== 啟動 ====================
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+
+</html>
