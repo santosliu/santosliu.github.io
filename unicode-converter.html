@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unicode 轉換工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 標題 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Unicode 轉換工具</h1>
+            <p class="text-gray-600 dark:text-gray-400">文字與各種編碼格式互轉：Unicode、UTF-8、URL Encode、HTML Encode、Base64</p>
+        </div>
+
+        <!-- 主要內容區域 -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+            <!-- 編碼格式分頁 -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button data-tab="unicode" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 bg-primary text-white">Unicode</button>
+                <button data-tab="utf8" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">UTF-8</button>
+                <button data-tab="url" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">URL Encode</button>
+                <button data-tab="html" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">HTML Encode</button>
+                <button data-tab="base64" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">Base64</button>
+            </div>
+
+            <!-- 輸入區域 -->
+            <div class="mb-4">
+                <label for="inputText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    輸入文字
+                </label>
+                <textarea
+                    id="inputText"
+                    rows="5"
+                    class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-vertical font-mono"
+                    placeholder="請輸入要轉換的文字..."
+                ></textarea>
+            </div>
+
+            <!-- 按鈕區域 -->
+            <div class="flex flex-wrap gap-3 mb-4">
+                <button
+                    id="encodeBtn"
+                    class="flex-1 min-w-[100px] bg-primary hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                >
+                    編碼 Encode
+                </button>
+                <button
+                    id="decodeBtn"
+                    class="flex-1 min-w-[100px] bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                >
+                    解碼 Decode
+                </button>
+                <button
+                    id="swapBtn"
+                    class="bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                    title="交換輸入與輸出"
+                >
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                    </svg>
+                    交換
+                </button>
+            </div>
+
+            <!-- 輸出區域 -->
+            <div>
+                <label for="outputText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    轉換結果
+                </label>
+                <div class="relative">
+                    <textarea
+                        id="outputText"
+                        rows="5"
+                        readonly
+                        class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-900 dark:text-white resize-vertical font-mono"
+                        placeholder="轉換結果將顯示在這裡..."
+                    ></textarea>
+                    <button
+                        id="copyButton"
+                        class="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 opacity-0"
+                        title="複製結果"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用說明 -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">使用說明</h3>
+            <ul class="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                <li>• 選擇上方的編碼格式分頁（Unicode、UTF-8、URL Encode、HTML Encode、Base64）</li>
+                <li>• 在輸入框中輸入文字或編碼字串</li>
+                <li>• 點擊「編碼」將普通文字轉為對應編碼，或點擊「解碼」將編碼還原為文字</li>
+                <li>• 點擊「交換」可將結果移至輸入框，方便連續轉換</li>
+                <li>• 點擊複製按鈕來複製轉換結果</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 深淺色模式檢測
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // DOM 元素
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const encodeBtn = document.getElementById('encodeBtn');
+        const decodeBtn = document.getElementById('decodeBtn');
+        const swapBtn = document.getElementById('swapBtn');
+        const copyButton = document.getElementById('copyButton');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+
+        let currentTab = 'unicode';
+
+        // 分頁切換
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentTab = btn.dataset.tab;
+                tabBtns.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white', 'active');
+                    b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                });
+                btn.classList.add('bg-primary', 'text-white', 'active');
+                btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            });
+        });
+
+        // 編碼函式
+        const encoders = {
+            unicode(text) {
+                return Array.from(text).map(ch => {
+                    const code = ch.codePointAt(0);
+                    if (code > 0xFFFF) {
+                        return '\\u{' + code.toString(16).toUpperCase() + '}';
+                    }
+                    return '\\u' + code.toString(16).toUpperCase().padStart(4, '0');
+                }).join('');
+            },
+            utf8(text) {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                return Array.from(bytes).map(b => '\\x' + b.toString(16).toUpperCase().padStart(2, '0')).join('');
+            },
+            url(text) {
+                return encodeURIComponent(text);
+            },
+            html(text) {
+                return Array.from(text).map(ch => {
+                    const code = ch.codePointAt(0);
+                    if (code > 127) {
+                        return '&#' + code + ';';
+                    }
+                    switch (ch) {
+                        case '&': return '&amp;';
+                        case '<': return '&lt;';
+                        case '>': return '&gt;';
+                        case '"': return '&quot;';
+                        case "'": return '&#39;';
+                        default: return ch;
+                    }
+                }).join('');
+            },
+            base64(text) {
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                let binary = '';
+                bytes.forEach(b => binary += String.fromCharCode(b));
+                return btoa(binary);
+            }
+        };
+
+        // 解碼函式
+        const decoders = {
+            unicode(text) {
+                // 支援 \u{XXXXX} 和 \uXXXX 兩種格式
+                return text.replace(/\\u\{([0-9A-Fa-f]+)\}|\\u([0-9A-Fa-f]{4})/g, (_, p1, p2) => {
+                    return String.fromCodePoint(parseInt(p1 || p2, 16));
+                });
+            },
+            utf8(text) {
+                const hexPattern = /\\x([0-9A-Fa-f]{2})/g;
+                const bytes = [];
+                let match;
+                while ((match = hexPattern.exec(text)) !== null) {
+                    bytes.push(parseInt(match[1], 16));
+                }
+                if (bytes.length === 0) return text;
+                const decoder = new TextDecoder('utf-8');
+                return decoder.decode(new Uint8Array(bytes));
+            },
+            url(text) {
+                try {
+                    return decodeURIComponent(text);
+                } catch {
+                    throw new Error('無效的 URL 編碼字串');
+                }
+            },
+            html(text) {
+                // 處理命名實體和數字實體
+                const el = document.createElement('textarea');
+                el.innerHTML = text;
+                return el.value;
+            },
+            base64(text) {
+                try {
+                    const binary = atob(text.trim());
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    const decoder = new TextDecoder('utf-8');
+                    return decoder.decode(bytes);
+                } catch {
+                    throw new Error('無效的 Base64 字串');
+                }
+            }
+        };
+
+        // 編碼按鈕
+        encodeBtn.addEventListener('click', () => {
+            const text = inputText.value;
+            if (!text) {
+                alert('請先輸入要轉換的文字');
+                return;
+            }
+            try {
+                outputText.value = encoders[currentTab](text);
+                showCopyButton();
+            } catch (e) {
+                alert('編碼失敗：' + e.message);
+            }
+        });
+
+        // 解碼按鈕
+        decodeBtn.addEventListener('click', () => {
+            const text = inputText.value;
+            if (!text) {
+                alert('請先輸入要解碼的文字');
+                return;
+            }
+            try {
+                outputText.value = decoders[currentTab](text);
+                showCopyButton();
+            } catch (e) {
+                alert('解碼失敗：' + e.message);
+            }
+        });
+
+        // 交換按鈕
+        swapBtn.addEventListener('click', () => {
+            const temp = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = temp;
+            showCopyButton();
+        });
+
+        // 顯示複製按鈕
+        function showCopyButton() {
+            if (outputText.value.trim()) {
+                copyButton.classList.remove('opacity-0');
+                copyButton.classList.add('opacity-100');
+            } else {
+                copyButton.classList.add('opacity-0');
+                copyButton.classList.remove('opacity-100');
+            }
+        }
+
+        // 複製功能
+        copyButton.addEventListener('click', async () => {
+            if (outputText.value.trim()) {
+                try {
+                    await navigator.clipboard.writeText(outputText.value);
+                    const originalText = copyButton.innerHTML;
+                    copyButton.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalText;
+                    }, 1000);
+                } catch (err) {
+                    console.error('複製失敗:', err);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
