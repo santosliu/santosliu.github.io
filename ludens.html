@@ -1638,6 +1638,7 @@ function addTextRow(defaults) {
     color: (defaults && defaults.color) || '#ffffff',
     position: (defaults && defaults.position) || '50',
     bold: (defaults && defaults.bold) !== undefined ? defaults.bold : true,
+    letterSpacing: (defaults && defaults.letterSpacing) || 0,
   };
   textOverlays.push(entry);
   renderTextRows();
@@ -1686,6 +1687,8 @@ function renderTextRows() {
         </select>
         <input type="number" value="${entry.size}" min="12" max="200" title="字體大小"
           onchange="updateTextRow(${idx},'size',+this.value)">
+        <input type="number" value="${entry.letterSpacing}" min="-10" max="50" title="字距"
+          onchange="updateTextRow(${idx},'letterSpacing',+this.value)">
         <button class="remove-text-btn" onclick="removeTextRow(${idx})" title="移除">×</button>
       </div>
     `;
@@ -1720,14 +1723,15 @@ function parseColorSegments(text, defaultColor) {
 }
 
 // Wrap segments into lines, respecting maxWidth
-function wrapSegments(ctx, segments, maxWidth) {
+function wrapSegments(ctx, segments, maxWidth, spacing) {
   // lines = [ [ { text, color }, ... ], ... ]
   const lines = [[]];
   let lineWidth = 0;
+  const sp = spacing || 0;
 
   segments.forEach(seg => {
     for (const char of seg.text) {
-      const charW = ctx.measureText(char).width;
+      const charW = ctx.measureText(char).width + sp;
       if (lineWidth + charW > maxWidth && lineWidth > 0) {
         lines.push([]);
         lineWidth = 0;
@@ -1746,6 +1750,23 @@ function wrapSegments(ctx, segments, maxWidth) {
   return lines;
 }
 
+// Measure segment width with letter spacing
+function measureWithSpacing(ctx, text, spacing) {
+  if (!spacing) return ctx.measureText(text).width;
+  let w = 0;
+  for (const char of text) w += ctx.measureText(char).width + spacing;
+  return w;
+}
+
+// Draw text char by char with letter spacing
+function drawTextWithSpacing(ctx, text, x, y, spacing, stroke) {
+  for (const char of text) {
+    if (stroke) ctx.strokeText(char, x, y);
+    else ctx.fillText(char, x, y);
+    x += ctx.measureText(char).width + spacing;
+  }
+}
+
 function drawTextOverlays(ctx, w, h, scale) {
   const padding = w * 0.08;
   const maxWidth = w - padding * 2;
@@ -1760,13 +1781,14 @@ function drawTextOverlays(ctx, w, h, scale) {
 
     const pct = parseInt(entry.position, 10) || 50;
     const lineHeight = fontSize * 1.4;
+    const sp = Math.round((entry.letterSpacing || 0) * scale);
 
     // Split by manual line breaks first, then parse colors & auto-wrap
     const manualLines = entry.text.split('\n');
     const allLines = []; // each item = [ { text, color }, ... ]
     manualLines.forEach(ml => {
       const segments = parseColorSegments(ml, entry.color);
-      const wrapped = wrapSegments(ctx, segments, maxWidth);
+      const wrapped = wrapSegments(ctx, segments, maxWidth, sp);
       wrapped.forEach(l => allLines.push(l));
     });
 
@@ -1779,7 +1801,7 @@ function drawTextOverlays(ctx, w, h, scale) {
       const ly = startY + i * lineHeight;
       // Calculate total line width for centering
       let totalW = 0;
-      lineSegs.forEach(s => { totalW += ctx.measureText(s.text).width; });
+      lineSegs.forEach(s => { totalW += measureWithSpacing(ctx, s.text, sp); });
       let drawX = w / 2 - totalW / 2;
 
       // Stroke pass (outline)
@@ -1787,15 +1809,15 @@ function drawTextOverlays(ctx, w, h, scale) {
       ctx.lineWidth = Math.max(2, fontSize / 12);
       let sx = drawX;
       lineSegs.forEach(s => {
-        ctx.strokeText(s.text, sx, ly);
-        sx += ctx.measureText(s.text).width;
+        drawTextWithSpacing(ctx, s.text, sx, ly, sp, true);
+        sx += measureWithSpacing(ctx, s.text, sp);
       });
 
       // Fill pass (colored text)
       lineSegs.forEach(s => {
         ctx.fillStyle = s.color;
-        ctx.fillText(s.text, drawX, ly);
-        drawX += ctx.measureText(s.text).width;
+        drawTextWithSpacing(ctx, s.text, drawX, ly, sp, false);
+        drawX += measureWithSpacing(ctx, s.text, sp);
       });
     });
 
