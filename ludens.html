@@ -1659,27 +1659,56 @@ function renderTextRows() {
   });
 }
 
+function wrapText(ctx, text, maxWidth) {
+  const lines = [];
+  let line = '';
+  for (const char of text) {
+    const test = line + char;
+    if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+      lines.push(line);
+      line = char;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 function drawTextOverlays(ctx, w, h, scale) {
+  const padding = w * 0.08; // 左右預留 8%
+  const maxWidth = w - padding * 2;
+
   textOverlays.forEach(entry => {
     if (!entry.text) return;
     const fontSize = Math.round(entry.size * scale);
     ctx.save();
     ctx.font = (entry.bold ? 'bold ' : '') + fontSize + 'px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
-    const pct = parseInt(entry.position, 10) || 50;
-    let x = w / 2;
-    let y = h * (pct / 100);
-
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // text shadow / outline for readability
+    const pct = parseInt(entry.position, 10) || 50;
+    const x = w / 2;
+    const lineHeight = fontSize * 1.4;
+    const lines = wrapText(ctx, entry.text, maxWidth);
+    const totalHeight = lines.length * lineHeight;
+    const startY = h * (pct / 100) - totalHeight / 2 + lineHeight / 2;
+
     ctx.strokeStyle = 'rgba(0,0,0,0.7)';
     ctx.lineWidth = Math.max(2, fontSize / 12);
     ctx.lineJoin = 'round';
-    ctx.strokeText(entry.text, x, y);
+
+    lines.forEach((line, i) => {
+      const ly = startY + i * lineHeight;
+      ctx.strokeText(line, x, ly);
+    });
 
     ctx.fillStyle = entry.color;
-    ctx.fillText(entry.text, x, y);
+    lines.forEach((line, i) => {
+      const ly = startY + i * lineHeight;
+      ctx.fillText(line, x, ly);
+    });
+
     ctx.restore();
   });
 }
