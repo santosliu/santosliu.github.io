@@ -669,15 +669,23 @@
 
   .text-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 8px 10px;
+    flex-wrap: wrap;
   }
 
-  .text-row input[type="text"] {
+  .text-row-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .text-row textarea {
     flex: 1;
     min-width: 0;
     background: var(--bg);
@@ -687,11 +695,21 @@
     color: var(--text);
     font-family: 'Space Mono', monospace;
     font-size: 12px;
+    resize: vertical;
+    min-height: 32px;
+    line-height: 1.4;
   }
 
-  .text-row input[type="text"]:focus {
+  .text-row textarea:focus {
     outline: none;
     border-color: var(--accent2);
+  }
+
+  .text-row .color-hint {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.4;
   }
 
   .text-row input[type="number"] {
@@ -1638,83 +1656,147 @@ function renderTextRows() {
     const row = document.createElement('div');
     row.className = 'text-row';
     row.innerHTML = `
-      <input type="text" value="${entry.text.replace(/"/g, '&quot;')}" placeholder="輸入文字…"
-        oninput="updateTextRow(${idx},'text',this.value)">
-      <select onchange="updateTextRow(${idx},'position',this.value)">
-        <option value="20" ${entry.position==='20'?'selected':''}>20%</option>
-        <option value="30" ${entry.position==='30'?'selected':''}>30%</option>
-        <option value="40" ${entry.position==='40'?'selected':''}>40%</option>
-        <option value="50" ${entry.position==='50'?'selected':''}>50%</option>
-        <option value="60" ${entry.position==='60'?'selected':''}>60%</option>
-        <option value="70" ${entry.position==='70'?'selected':''}>70%</option>
-        <option value="80" ${entry.position==='80'?'selected':''}>80%</option>
-      </select>
-      <input type="number" value="${entry.size}" min="12" max="200" title="字體大小"
-        onchange="updateTextRow(${idx},'size',+this.value)">
-      <select onchange="updateTextRow(${idx},'color',this.value)">
-        <option value="#ffffff" ${entry.color==='#ffffff'?'selected':''}>白</option>
-        <option value="#000000" ${entry.color==='#000000'?'selected':''}>黑</option>
-        <option value="#ff3e3e" ${entry.color==='#ff3e3e'?'selected':''}>紅</option>
-        <option value="#ffe566" ${entry.color==='#ffe566'?'selected':''}>黃</option>
-        <option value="#00e5ff" ${entry.color==='#00e5ff'?'selected':''}>藍</option>
-        <option value="#00e5a0" ${entry.color==='#00e5a0'?'selected':''}>綠</option>
-        <option value="#ff6b8a" ${entry.color==='#ff6b8a'?'selected':''}>粉</option>
-        <option value="#c0c0c0" ${entry.color==='#c0c0c0'?'selected':''}>灰</option>
-      </select>
-      <button class="remove-text-btn" onclick="removeTextRow(${idx})" title="移除">×</button>
+      <textarea rows="2" placeholder="輸入文字… 用 {黃} {紅} 等換色"
+        oninput="updateTextRow(${idx},'text',this.value)">${entry.text}</textarea>
+      <div class="text-row-controls">
+        <select onchange="updateTextRow(${idx},'position',this.value)">
+          <option value="20" ${entry.position==='20'?'selected':''}>20%</option>
+          <option value="30" ${entry.position==='30'?'selected':''}>30%</option>
+          <option value="40" ${entry.position==='40'?'selected':''}>40%</option>
+          <option value="50" ${entry.position==='50'?'selected':''}>50%</option>
+          <option value="60" ${entry.position==='60'?'selected':''}>60%</option>
+          <option value="70" ${entry.position==='70'?'selected':''}>70%</option>
+          <option value="80" ${entry.position==='80'?'selected':''}>80%</option>
+        </select>
+        <select onchange="updateTextRow(${idx},'color',this.value)" title="預設顏色">
+          <option value="#ffffff" ${entry.color==='#ffffff'?'selected':''}>白</option>
+          <option value="#000000" ${entry.color==='#000000'?'selected':''}>黑</option>
+          <option value="#ff3e3e" ${entry.color==='#ff3e3e'?'selected':''}>紅</option>
+          <option value="#ffe566" ${entry.color==='#ffe566'?'selected':''}>黃</option>
+          <option value="#00e5ff" ${entry.color==='#00e5ff'?'selected':''}>藍</option>
+          <option value="#00e5a0" ${entry.color==='#00e5a0'?'selected':''}>綠</option>
+          <option value="#ff6b8a" ${entry.color==='#ff6b8a'?'selected':''}>粉</option>
+          <option value="#c0c0c0" ${entry.color==='#c0c0c0'?'selected':''}>灰</option>
+        </select>
+        <input type="number" value="${entry.size}" min="12" max="200" title="字體大小"
+          onchange="updateTextRow(${idx},'size',+this.value)">
+        <button class="remove-text-btn" onclick="removeTextRow(${idx})" title="移除">×</button>
+      </div>
+      <div class="color-hint">
+        💡 中途換色：在文字中輸入 <b>{顏色}</b> 即可切換，例如：<br>
+        <span style="color:#fff">今日限定</span><span style="color:#ffe566">半價優惠</span><span style="color:#fff">不要錯過</span>
+        → 輸入：今日限定{黃}半價優惠{白}不要錯過<br>
+        可用：{白} {黑} {紅} {黃} {藍} {綠} {粉} {灰}
+      </div>
     `;
     container.appendChild(row);
   });
 }
 
-function wrapText(ctx, text, maxWidth) {
-  const lines = [];
-  let line = '';
-  for (const char of text) {
-    const test = line + char;
-    if (ctx.measureText(test).width > maxWidth && line.length > 0) {
-      lines.push(line);
-      line = char;
-    } else {
-      line = test;
+const COLOR_MAP = {
+  '白': '#ffffff', '黑': '#000000', '紅': '#ff3e3e', '黃': '#ffe566',
+  '藍': '#00e5ff', '綠': '#00e5a0', '粉': '#ff6b8a', '灰': '#c0c0c0',
+};
+
+// Parse text into segments: [ { text, color }, ... ]
+// Color tags like {黃} switch color for subsequent text
+function parseColorSegments(text, defaultColor) {
+  const segments = [];
+  const regex = /\{(白|黑|紅|黃|藍|綠|粉|灰)\}/g;
+  let lastIdx = 0;
+  let curColor = defaultColor;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      segments.push({ text: text.slice(lastIdx, match.index), color: curColor });
     }
+    curColor = COLOR_MAP[match[1]] || defaultColor;
+    lastIdx = regex.lastIndex;
   }
-  if (line) lines.push(line);
+  if (lastIdx < text.length) {
+    segments.push({ text: text.slice(lastIdx), color: curColor });
+  }
+  return segments;
+}
+
+// Wrap segments into lines, respecting maxWidth
+function wrapSegments(ctx, segments, maxWidth) {
+  // lines = [ [ { text, color }, ... ], ... ]
+  const lines = [[]];
+  let lineWidth = 0;
+
+  segments.forEach(seg => {
+    for (const char of seg.text) {
+      const charW = ctx.measureText(char).width;
+      if (lineWidth + charW > maxWidth && lineWidth > 0) {
+        lines.push([]);
+        lineWidth = 0;
+      }
+      const curLine = lines[lines.length - 1];
+      const last = curLine[curLine.length - 1];
+      if (last && last.color === seg.color) {
+        last.text += char;
+      } else {
+        curLine.push({ text: char, color: seg.color });
+      }
+      lineWidth += charW;
+    }
+  });
+
   return lines;
 }
 
 function drawTextOverlays(ctx, w, h, scale) {
-  const padding = w * 0.08; // 左右預留 8%
+  const padding = w * 0.08;
   const maxWidth = w - padding * 2;
 
   textOverlays.forEach(entry => {
     if (!entry.text) return;
     const fontSize = Math.round(entry.size * scale);
+    const font = (entry.bold ? 'bold ' : '') + fontSize + 'px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
     ctx.save();
-    ctx.font = (entry.bold ? 'bold ' : '') + fontSize + 'px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
-    ctx.textAlign = 'center';
+    ctx.font = font;
     ctx.textBaseline = 'middle';
 
     const pct = parseInt(entry.position, 10) || 50;
-    const x = w / 2;
     const lineHeight = fontSize * 1.4;
-    const lines = wrapText(ctx, entry.text, maxWidth);
-    const totalHeight = lines.length * lineHeight;
-    const startY = h * (pct / 100) - totalHeight / 2 + lineHeight / 2;
 
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-    ctx.lineWidth = Math.max(2, fontSize / 12);
-    ctx.lineJoin = 'round';
-
-    lines.forEach((line, i) => {
-      const ly = startY + i * lineHeight;
-      ctx.strokeText(line, x, ly);
+    // Split by manual line breaks first, then parse colors & auto-wrap
+    const manualLines = entry.text.split('\n');
+    const allLines = []; // each item = [ { text, color }, ... ]
+    manualLines.forEach(ml => {
+      const segments = parseColorSegments(ml, entry.color);
+      const wrapped = wrapSegments(ctx, segments, maxWidth);
+      wrapped.forEach(l => allLines.push(l));
     });
 
-    ctx.fillStyle = entry.color;
-    lines.forEach((line, i) => {
+    const totalHeight = allLines.length * lineHeight;
+    const startY = h * (pct / 100) - totalHeight / 2 + lineHeight / 2;
+
+    ctx.lineJoin = 'round';
+
+    allLines.forEach((lineSegs, i) => {
       const ly = startY + i * lineHeight;
-      ctx.fillText(line, x, ly);
+      // Calculate total line width for centering
+      let totalW = 0;
+      lineSegs.forEach(s => { totalW += ctx.measureText(s.text).width; });
+      let drawX = w / 2 - totalW / 2;
+
+      // Stroke pass (outline)
+      ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+      ctx.lineWidth = Math.max(2, fontSize / 12);
+      let sx = drawX;
+      lineSegs.forEach(s => {
+        ctx.strokeText(s.text, sx, ly);
+        sx += ctx.measureText(s.text).width;
+      });
+
+      // Fill pass (colored text)
+      lineSegs.forEach(s => {
+        ctx.fillStyle = s.color;
+        ctx.fillText(s.text, drawX, ly);
+        drawX += ctx.measureText(s.text).width;
+      });
     });
 
     ctx.restore();
