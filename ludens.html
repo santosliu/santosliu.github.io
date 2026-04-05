@@ -1651,8 +1651,16 @@ function renderTextRows() {
       </select>
       <input type="number" value="${entry.size}" min="12" max="200" title="字體大小"
         onchange="updateTextRow(${idx},'size',+this.value)">
-      <input type="color" value="${entry.color}" title="文字顏色"
-        oninput="updateTextRow(${idx},'color',this.value)">
+      <select onchange="updateTextRow(${idx},'color',this.value)">
+        <option value="#ffffff" ${entry.color==='#ffffff'?'selected':''}>白</option>
+        <option value="#000000" ${entry.color==='#000000'?'selected':''}>黑</option>
+        <option value="#ff3e3e" ${entry.color==='#ff3e3e'?'selected':''}>紅</option>
+        <option value="#ffe566" ${entry.color==='#ffe566'?'selected':''}>黃</option>
+        <option value="#00e5ff" ${entry.color==='#00e5ff'?'selected':''}>藍</option>
+        <option value="#00e5a0" ${entry.color==='#00e5a0'?'selected':''}>綠</option>
+        <option value="#ff6b8a" ${entry.color==='#ff6b8a'?'selected':''}>粉</option>
+        <option value="#c0c0c0" ${entry.color==='#c0c0c0'?'selected':''}>灰</option>
+      </select>
       <button class="remove-text-btn" onclick="removeTextRow(${idx})" title="移除">×</button>
     `;
     container.appendChild(row);
