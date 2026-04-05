@@ -705,11 +705,11 @@
     border-color: var(--accent2);
   }
 
-  .text-row .color-hint {
+  .color-hint {
     font-size: 10px;
     color: var(--text-dim);
-    margin-top: 4px;
-    line-height: 1.4;
+    margin-bottom: 8px;
+    line-height: 1.6;
   }
 
   .text-row input[type="number"] {
@@ -1116,6 +1116,12 @@
         <!-- Text overlay controls -->
         <div class="text-overlay-panel" id="textOverlayPanel" style="display:none">
           <div class="panel-title">✏️ 文字疊加</div>
+          <div class="color-hint">
+            💡 中途換色：在文字中輸入 <b>{顏色}</b> 即可切換，例如：<br>
+            <span style="color:#fff">今日限定</span><span style="color:#ffe566">半價優惠</span><span style="color:#fff">不要錯過</span>
+            → 輸入：今日限定{黃}半價優惠{白}不要錯過<br>
+            可用：{白} {黑} {紅} {黃} {藍} {綠} {粉} {灰}
+          </div>
           <div class="text-rows" id="textRows"></div>
           <button class="add-text-btn" onclick="addTextRow()">+ 新增文字</button>
         </div>
@@ -1681,12 +1687,6 @@ function renderTextRows() {
         <input type="number" value="${entry.size}" min="12" max="200" title="字體大小"
           onchange="updateTextRow(${idx},'size',+this.value)">
         <button class="remove-text-btn" onclick="removeTextRow(${idx})" title="移除">×</button>
-      </div>
-      <div class="color-hint">
-        💡 中途換色：在文字中輸入 <b>{顏色}</b> 即可切換，例如：<br>
-        <span style="color:#fff">今日限定</span><span style="color:#ffe566">半價優惠</span><span style="color:#fff">不要錯過</span>
-        → 輸入：今日限定{黃}半價優惠{白}不要錯過<br>
-        可用：{白} {黑} {紅} {黃} {藍} {綠} {粉} {灰}
       </div>
     `;
     container.appendChild(row);
