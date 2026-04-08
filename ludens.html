@@ -669,13 +669,18 @@
 
   .text-row {
     display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 8px 10px;
-    flex-wrap: wrap;
+  }
+
+  .text-row-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
   }
 
   .text-row-controls {
@@ -710,23 +715,6 @@
     color: var(--text-dim);
     margin-bottom: 8px;
     line-height: 1.6;
-  }
-
-  .text-row input[type="number"] {
-    width: 52px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 4px;
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    text-align: center;
-  }
-
-  .text-row input[type="number"]:focus {
-    outline: none;
-    border-color: var(--accent2);
   }
 
   .text-row input[type="color"] {
@@ -793,6 +781,82 @@
   }
 
   .add-text-btn:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  .char-warning {
+    font-size: 10px;
+    color: var(--accent);
+    line-height: 1.4;
+    display: none;
+  }
+
+  .type-toggle {
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .type-toggle button {
+    padding: 4px 8px;
+    background: var(--bg);
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .type-toggle button:first-child {
+    border-right: 1px solid var(--border);
+  }
+
+  .type-toggle button.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .type-toggle button:hover:not(.active) {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .nine-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 22px);
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .nine-grid-btn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .nine-grid-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .nine-grid-btn:hover:not(.active) {
     border-color: var(--accent2);
     color: var(--accent2);
   }
@@ -1170,7 +1234,7 @@ let currentPlatform = null;
 let zoomScale = 1.0;
 let currentTab = 'single';
 let originalFilename = 'image';
-let textOverlays = []; // { text, size, color, position, bold }
+let textOverlays = []; // { text, type, color, position }
 const MAX_PREVIEW_W = 700;
 const MAX_PREVIEW_H = 520;
 
@@ -1286,7 +1350,7 @@ function renderPreview() {
 
   // Draw text overlays on preview (scale relative to full size)
   const textScale = dispW / p.w;
-  drawTextOverlays(canvas.getContext('2d'), dispW, dispH, textScale);
+  drawTextOverlays(canvas.getContext('2d'), dispW, dispH, textScale, p.safeZone);
 
   // Text overlay panel
   document.getElementById('textOverlayPanel').style.display = 'block';
@@ -1548,7 +1612,7 @@ function renderCleanCrop(p) {
   }
 
   // Draw text overlays at full resolution
-  drawTextOverlays(ctx, p.w, p.h, 1);
+  drawTextOverlays(ctx, p.w, p.h, 1, p.safeZone);
 
   return canvas;
 }
@@ -1633,12 +1697,10 @@ dropBox.addEventListener('click', e => {
 // ─── Text overlay management ────────────────────────────────────────────────
 function addTextRow(defaults) {
   const entry = {
-    text: (defaults && defaults.text) || '',
-    size: (defaults && defaults.size) || 48,
-    color: (defaults && defaults.color) || '#ffffff',
-    position: (defaults && defaults.position) || '50',
-    bold: (defaults && defaults.bold) !== undefined ? defaults.bold : true,
-    letterSpacing: (defaults && defaults.letterSpacing) || 0,
+    text:     (defaults && defaults.text)     || '',
+    type:     (defaults && defaults.type)     || 'heading',
+    color:    (defaults && defaults.color)    || '#ffffff',
+    position: (defaults && defaults.position) || 'center-center',
   };
   textOverlays.push(entry);
   renderTextRows();
@@ -1653,47 +1715,107 @@ function removeTextRow(idx) {
 
 function updateTextRow(idx, field, value) {
   textOverlays[idx][field] = value;
+  updateCharWarning(idx);
   renderPreview();
 }
 
 function renderTextRows() {
   const container = document.getElementById('textRows');
   container.innerHTML = '';
+
+  const GRID_POS = [
+    'top-left','top-center','top-right',
+    'center-left','center-center','center-right',
+    'bottom-left','bottom-center','bottom-right',
+  ];
+  const GRID_SYM = ['↖','↑','↗','←','·','→','↙','↓','↘'];
+
   textOverlays.forEach((entry, idx) => {
+    const isHeading = (entry.type || 'heading') === 'heading';
+    const cfg = getFontConfig(entry.type || 'heading', entry.text || '');
+    const cleanText = (entry.text || '')
+      .replace(/\{[白黑紅黃藍綠粉灰]\}/g, '').replace(/\n/g, '');
+    const overLimit = cleanText.length > cfg.limit;
+
+    const nineGridHTML = GRID_POS.map((pos, i) =>
+      `<button class="nine-grid-btn${entry.position === pos ? ' active' : ''}"
+        onclick="updateTextRow(${idx},'position','${pos}');renderTextRows()"
+        title="${pos}">${GRID_SYM[i]}</button>`
+    ).join('');
+
+    const colorOptions = [
+      ['#ffffff','白'],['#000000','黑'],['#ff3e3e','紅'],['#ffe566','黃'],
+      ['#00e5ff','藍'],['#00e5a0','綠'],['#ff6b8a','粉'],['#c0c0c0','灰'],
+    ].map(([val, label]) =>
+      `<option value="${val}" ${entry.color === val ? 'selected' : ''}>${label}</option>`
+    ).join('');
+
     const row = document.createElement('div');
     row.className = 'text-row';
     row.innerHTML = `
-      <textarea rows="2" placeholder="輸入文字… 用 {黃} {紅} 等換色"
-        oninput="updateTextRow(${idx},'text',this.value)">${entry.text}</textarea>
-      <div class="text-row-controls">
-        <select onchange="updateTextRow(${idx},'position',this.value)">
-          <option value="20" ${entry.position==='20'?'selected':''}>20%</option>
-          <option value="30" ${entry.position==='30'?'selected':''}>30%</option>
-          <option value="40" ${entry.position==='40'?'selected':''}>40%</option>
-          <option value="50" ${entry.position==='50'?'selected':''}>50%</option>
-          <option value="60" ${entry.position==='60'?'selected':''}>60%</option>
-          <option value="70" ${entry.position==='70'?'selected':''}>70%</option>
-          <option value="80" ${entry.position==='80'?'selected':''}>80%</option>
-        </select>
-        <select onchange="updateTextRow(${idx},'color',this.value)" title="預設顏色">
-          <option value="#ffffff" ${entry.color==='#ffffff'?'selected':''}>白</option>
-          <option value="#000000" ${entry.color==='#000000'?'selected':''}>黑</option>
-          <option value="#ff3e3e" ${entry.color==='#ff3e3e'?'selected':''}>紅</option>
-          <option value="#ffe566" ${entry.color==='#ffe566'?'selected':''}>黃</option>
-          <option value="#00e5ff" ${entry.color==='#00e5ff'?'selected':''}>藍</option>
-          <option value="#00e5a0" ${entry.color==='#00e5a0'?'selected':''}>綠</option>
-          <option value="#ff6b8a" ${entry.color==='#ff6b8a'?'selected':''}>粉</option>
-          <option value="#c0c0c0" ${entry.color==='#c0c0c0'?'selected':''}>灰</option>
-        </select>
-        <input type="number" value="${entry.size}" min="12" max="200" title="字體大小"
-          onchange="updateTextRow(${idx},'size',+this.value)">
-        <input type="number" value="${entry.letterSpacing}" min="-10" max="50" title="字距"
-          onchange="updateTextRow(${idx},'letterSpacing',+this.value)">
-        <button class="remove-text-btn" onclick="removeTextRow(${idx})" title="移除">×</button>
+      <div class="text-row-top">
+        <textarea rows="2" placeholder="輸入文字… 用 {黃} {紅} 等換色"
+          oninput="updateTextRow(${idx},'text',this.value)">${entry.text}</textarea>
+        <div class="text-row-controls">
+          <div class="type-toggle">
+            <button class="${isHeading ? 'active' : ''}"
+              onclick="updateTextRow(${idx},'type','heading');renderTextRows()">大標</button>
+            <button class="${!isHeading ? 'active' : ''}"
+              onclick="updateTextRow(${idx},'type','body');renderTextRows()">內文</button>
+          </div>
+          <div class="nine-grid">${nineGridHTML}</div>
+          <select onchange="updateTextRow(${idx},'color',this.value)" title="文字顏色">
+            ${colorOptions}
+          </select>
+          <button class="remove-text-btn" onclick="removeTextRow(${idx})" title="移除">×</button>
+        </div>
+      </div>
+      <div class="char-warning" id="char-warning-${idx}"
+        style="${overLimit ? '' : 'display:none'}">
+        ${overLimit ? `⚠ 建議最多 ${cfg.limit} 字（目前 ${cleanText.length} 字）` : ''}
       </div>
     `;
     container.appendChild(row);
   });
+}
+
+// ─── Typography helpers ─────────────────────────────────────────────────────
+// Detect if text contains Chinese characters (mixed → Chinese rules apply)
+function isChinese(text) {
+  const cleaned = text.replace(/\{[白黑紅黃藍綠粉灰]\}/g, '');
+  return /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(cleaned);
+}
+
+// Return font config based on type (heading/body) and language
+function getFontConfig(type, text) {
+  const zh = isChinese(text);
+  if (type === 'heading') {
+    return zh
+      ? { size: 65, spacing: 10, bold: true,  limit: 12 }
+      : { size: 56, spacing: 5,  bold: true,  limit: 18 };
+  } else {
+    return zh
+      ? { size: 55, spacing: -5, bold: false, limit: 16 }
+      : { size: 50, spacing: 0,  bold: false, limit: 22 };
+  }
+}
+
+// Update character count warning for a row (does not rebuild DOM)
+function updateCharWarning(idx) {
+  const entry = textOverlays[idx];
+  const warnEl = document.getElementById('char-warning-' + idx);
+  if (!warnEl) return;
+  const cleanText = (entry.text || '')
+    .replace(/\{[白黑紅黃藍綠粉灰]\}/g, '')
+    .replace(/\n/g, '');
+  const cfg = getFontConfig(entry.type || 'heading', entry.text || '');
+  if (cleanText.length > cfg.limit) {
+    warnEl.textContent = `⚠ 建議最多 ${cfg.limit} 字（目前 ${cleanText.length} 字）`;
+    warnEl.style.display = 'block';
+  } else {
+    warnEl.textContent = '';
+    warnEl.style.display = 'none';
+  }
 }
 
 const COLOR_MAP = {
@@ -1767,57 +1889,92 @@ function drawTextWithSpacing(ctx, text, x, y, spacing, stroke) {
   }
 }
 
-function drawTextOverlays(ctx, w, h, scale) {
-  const padding = w * 0.08;
-  const maxWidth = w - padding * 2;
+function drawTextOverlays(ctx, w, h, scale, safeZone) {
+  const sz      = safeZone || 0.9;
+  const safeX   = w * (1 - sz) / 2;
+  const safeY   = h * (1 - sz) / 2;
+  const safeW   = w * sz;
+  const safeH   = h * sz;
+  const pad     = w * 0.02;
+  const innerX  = safeX + pad;
+  const innerY  = safeY + pad;
+  const innerW  = safeW - pad * 2;
+  const innerH  = safeH - pad * 2;
 
   textOverlays.forEach(entry => {
     if (!entry.text) return;
-    const fontSize = Math.round(entry.size * scale);
-    const font = (entry.bold ? 'bold ' : '') + fontSize + 'px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
+
+    const cfg      = getFontConfig(entry.type || 'heading', entry.text);
+    const fontSize = Math.round(cfg.size * scale);
+    const sp       = Math.round(cfg.spacing * scale);
+    const font     = (cfg.bold ? 'bold ' : '') +
+                     fontSize + 'px "Noto Sans TC", "Microsoft JhengHei", sans-serif';
+
     ctx.save();
     ctx.font = font;
     ctx.textBaseline = 'middle';
 
-    const pct = parseInt(entry.position, 10) || 50;
     const lineHeight = fontSize * 1.4;
-    const sp = Math.round((entry.letterSpacing || 0) * scale);
+    const posStr = entry.position || 'center-center';
+    const parts  = posStr.split('-');
+    const valign = parts[0]; // 'top' | 'center' | 'bottom'
+    const halign = parts[1]; // 'left' | 'center' | 'right'
 
-    // Split by manual line breaks first, then parse colors & auto-wrap
+    // Manual line breaks → colour parsing → auto-wrap
     const manualLines = entry.text.split('\n');
-    const allLines = []; // each item = [ { text, color }, ... ]
+    const allLines = [];
     manualLines.forEach(ml => {
-      const segments = parseColorSegments(ml, entry.color);
-      const wrapped = wrapSegments(ctx, segments, maxWidth, sp);
+      const segs    = parseColorSegments(ml, entry.color);
+      const wrapped = wrapSegments(ctx, segs, innerW, sp);
       wrapped.forEach(l => allLines.push(l));
     });
 
     const totalHeight = allLines.length * lineHeight;
-    const startY = h * (pct / 100) - totalHeight / 2 + lineHeight / 2;
+
+    // Vertical start Y
+    let startY;
+    if (valign === 'top') {
+      startY = innerY + lineHeight / 2;
+    } else if (valign === 'bottom') {
+      startY = innerY + innerH - totalHeight + lineHeight / 2;
+    } else {
+      startY = innerY + (innerH - totalHeight) / 2 + lineHeight / 2;
+    }
 
     ctx.lineJoin = 'round';
 
     allLines.forEach((lineSegs, i) => {
       const ly = startY + i * lineHeight;
-      // Calculate total line width for centering
+
+      // Total line width
       let totalW = 0;
       lineSegs.forEach(s => { totalW += measureWithSpacing(ctx, s.text, sp); });
-      let drawX = w / 2 - totalW / 2;
 
-      // Stroke pass (outline)
+      // Horizontal start X
+      let drawX;
+      if (halign === 'left') {
+        drawX = innerX;
+      } else if (halign === 'right') {
+        drawX = innerX + innerW - totalW;
+      } else {
+        drawX = innerX + (innerW - totalW) / 2;
+      }
+
+      // Stroke pass
       ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-      ctx.lineWidth = Math.max(2, fontSize / 12);
+      ctx.lineWidth   = Math.max(2, fontSize / 12);
       let sx = drawX;
       lineSegs.forEach(s => {
         drawTextWithSpacing(ctx, s.text, sx, ly, sp, true);
         sx += measureWithSpacing(ctx, s.text, sp);
       });
 
-      // Fill pass (colored text)
+      // Fill pass
+      let fx = drawX;
       lineSegs.forEach(s => {
         ctx.fillStyle = s.color;
-        drawTextWithSpacing(ctx, s.text, drawX, ly, sp, false);
-        drawX += measureWithSpacing(ctx, s.text, sp);
+        drawTextWithSpacing(ctx, s.text, fx, ly, sp, false);
+        fx += measureWithSpacing(ctx, s.text, sp);
       });
     });
 
