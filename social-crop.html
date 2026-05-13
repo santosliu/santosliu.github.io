@@ -459,6 +459,34 @@
     margin-top: 2px;
   }
 
+  /* Fit mode toggle */
+  .fit-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid var(--border);
+  }
+
+  .fit-btn {
+    padding: 5px 12px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  .fit-btn:hover { color: var(--text); }
+  .fit-btn.active { background: var(--accent2); color: #0a0a0f; }
+
   /* Zoom controls */
   .zoom-controls {
     display: flex;
@@ -834,7 +862,7 @@
         <div class="how-icon">📐</div>
         <div class="how-text">
           <strong>選擇平台</strong>
-          <span>從 IG、FB、YouTube、X、LINE 等 22 種尺寸中選取</span>
+          <span>從 IG、FB、YouTube、X、LINE 等 23 種尺寸中選取</span>
         </div>
       </div>
       <div class="how-arrow">→</div>
@@ -861,7 +889,7 @@
     <div class="feature-pills">
       <div class="pill">✅ 完全免費，無需登入</div>
       <div class="pill">🔒 圖片不離開你的電腦</div>
-      <div class="pill">📦 22 種平台尺寸一次搞定</div>
+      <div class="pill">📦 23 種平台尺寸一次搞定</div>
       <div class="pill">⚡ 即時預覽，秒看裁切結果</div>
       <div class="pill">🎯 安全區域提示</div>
       <div class="pill">🖼️ 支援圓形頭像裁切預覽</div>
@@ -901,6 +929,10 @@
             <button class="tab active" onclick="switchTab('single')">單一預覽</button>
             <button class="tab" onclick="switchTab('all')">全覽</button>
           </div>
+          <div class="fit-toggle" id="fitToggle">
+            <button class="fit-btn active" id="fitBtnCrop" onclick="setFitMode('crop')">✂️ 裁切</button>
+            <button class="fit-btn" id="fitBtnFill" onclick="setFitMode('fill')">⬛ 填滿</button>
+          </div>
           <div class="zoom-controls" id="zoomControls">
             <button class="zoom-btn" onclick="zoom(-0.1)">−</button>
             <span class="zoom-label" id="zoomLabel">100%</span>
@@ -937,8 +969,8 @@
               <value id="infoStatus">—</value>
             </div>
           </div>
-          <div class="legend" style="margin-top:16px">
-            <div class="legend-item">
+          <div class="legend" style="margin-top:16px" id="legendArea">
+            <div class="legend-item" id="legendCropBorder">
               <div class="legend-swatch" style="background:#00e5ff; opacity:0.8"></div>
               <span>裁切邊界</span>
             </div>
@@ -946,9 +978,13 @@
               <div class="legend-swatch" style="background:#ffe566; opacity:0.8; border: 1px dashed #ffe566"></div>
               <span>安全區域（建議重要內容不要超出）</span>
             </div>
-            <div class="legend-item">
+            <div class="legend-item" id="legendCropArea">
               <div class="legend-swatch" style="background:rgba(0,0,0,0.5)"></div>
               <span>被裁切的區域</span>
+            </div>
+            <div class="legend-item" id="legendFillBg" style="display:none">
+              <div class="legend-swatch" style="background:linear-gradient(90deg,#333,#555); opacity:0.8"></div>
+              <span>模糊背景填充區域</span>
             </div>
           </div>
         </div>
@@ -962,7 +998,7 @@
           </div>
           <div class="all-platforms-grid" id="allPlatformsGrid"></div>
           <div class="dl-all-bar" id="dlAllBar" style="display:none">
-            <div class="dl-all-info">下載全部 <strong id="dlAllCount">22</strong> 張，以原始解析度匯出（不含輔助線）</div>
+            <div class="dl-all-info">下載全部 <strong id="dlAllCount">23</strong> 張，以原始解析度匯出（不含輔助線）</div>
             <button class="dl-btn" onclick="downloadAll()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               一鍵下載全部
@@ -992,7 +1028,8 @@ const PLATFORMS = [
     { id: 'ig-profile', name: 'IG 個人頭像', w: 320, h: 320, icon: '👤', color: '#e1306c', safeZone: 0.8, circle: true },
   ]},
   { group: 'Facebook', items: [
-    { id: 'fb-post', name: 'FB 貼文', w: 1200, h: 630, icon: '📘', color: '#1877f2', safeZone: 0.9 },
+    { id: 'fb-post-portrait', name: 'FB 貼文 (直式)', w: 1200, h: 1800, icon: '📘', color: '#1877f2', safeZone: 0.9 },
+    { id: 'fb-post-square', name: 'FB 貼文 (方形)', w: 1200, h: 1200, icon: '📘', color: '#1877f2', safeZone: 0.9 },
     { id: 'fb-cover', name: 'FB 封面', w: 820, h: 312, icon: '🖼️', color: '#1877f2', safeZone: 0.85 },
     { id: 'fb-profile', name: 'FB 個人頭像', w: 180, h: 180, icon: '👤', color: '#1877f2', safeZone: 0.8, circle: true },
     { id: 'fb-stories', name: 'FB Stories', w: 1080, h: 1920, icon: '📱', color: '#1877f2', safeZone: 0.85 },
@@ -1024,7 +1061,8 @@ let uploadedImage = null;
 let currentPlatform = null;
 let zoomScale = 1.0;
 let currentTab = 'single';
-let originalFilename = 'image'; // track original filename
+let originalFilename = 'image';
+let fitMode = 'crop'; // 'crop' | 'fill'
 const MAX_PREVIEW_W = 700;
 const MAX_PREVIEW_H = 520;
 
@@ -1148,31 +1186,43 @@ function renderPreview() {
 }
 
 // ─── Draw crop preview on canvas ────────────────────────────────────────────
-function drawCropPreview(canvas, p, dispW, dispH) {
+function drawCropPreview(canvas, p, dispW, dispH, overrideFitMode) {
   const ctx = canvas.getContext('2d');
   const img = uploadedImage;
+  const mode = overrideFitMode || fitMode;
 
-  // Fit image into platform ratio (center crop)
   const imgAspect = img.width / img.height;
   const platAspect = p.w / p.h;
 
-  let srcX, srcY, srcW, srcH;
-  if (imgAspect > platAspect) {
-    // Image is wider → crop sides
-    srcH = img.height;
-    srcW = img.height * platAspect;
-    srcX = (img.width - srcW) / 2;
-    srcY = 0;
-  } else {
-    // Image is taller → crop top/bottom
-    srcW = img.width;
-    srcH = img.width / platAspect;
-    srcX = 0;
-    srcY = (img.height - srcH) / 2;
-  }
+  if (mode === 'fill') {
+    // Background: blurred cover
+    ctx.save();
+    ctx.filter = 'blur(18px) brightness(0.55)';
+    let bW, bH;
+    if (imgAspect > platAspect) { bH = dispH; bW = dispH * imgAspect; }
+    else { bW = dispW; bH = dispW / imgAspect; }
+    ctx.drawImage(img, (dispW - bW) / 2, (dispH - bH) / 2, bW, bH);
+    ctx.restore();
 
-  // Draw the cropped image
-  ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, dispW, dispH);
+    // Foreground: contain (全圖嵌入)
+    let fW, fH;
+    if (imgAspect > platAspect) { fW = dispW; fH = dispW / imgAspect; }
+    else { fH = dispH; fW = dispH * imgAspect; }
+    const fX = (dispW - fW) / 2;
+    const fY = (dispH - fH) / 2;
+    ctx.drawImage(img, 0, 0, img.width, img.height, fX, fY, fW, fH);
+  } else {
+    // Crop mode: center crop
+    let srcX, srcY, srcW, srcH;
+    if (imgAspect > platAspect) {
+      srcH = img.height; srcW = img.height * platAspect;
+      srcX = (img.width - srcW) / 2; srcY = 0;
+    } else {
+      srcW = img.width; srcH = img.width / platAspect;
+      srcX = 0; srcY = (img.height - srcH) / 2;
+    }
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, dispW, dispH);
+  }
 
   // If circle (profile pictures), clip with circle overlay
   if (p.circle) {
@@ -1295,6 +1345,23 @@ function switchTab(tab) {
   else if (currentPlatform) renderPreview();
 }
 
+// ─── Fit mode ────────────────────────────────────────────────────────────────
+function setFitMode(mode) {
+  fitMode = mode;
+  document.getElementById('fitBtnCrop').classList.toggle('active', mode === 'crop');
+  document.getElementById('fitBtnFill').classList.toggle('active', mode === 'fill');
+  // Update legend visibility
+  const isFill = mode === 'fill';
+  const legendCropBorder = document.getElementById('legendCropBorder');
+  const legendCropArea = document.getElementById('legendCropArea');
+  const legendFillBg = document.getElementById('legendFillBg');
+  if (legendCropBorder) legendCropBorder.style.display = isFill ? 'none' : 'flex';
+  if (legendCropArea) legendCropArea.style.display = isFill ? 'none' : 'flex';
+  if (legendFillBg) legendFillBg.style.display = isFill ? 'flex' : 'none';
+  if (currentPlatform) renderPreview();
+  if (currentTab === 'all') renderAllPlatforms();
+}
+
 // ─── Zoom ────────────────────────────────────────────────────────────────────
 function zoom(delta) {
   zoomScale = Math.max(0.3, Math.min(2.0, zoomScale + delta));
@@ -1334,7 +1401,7 @@ function buildFilename(p) {
   return `${base}_${platformSlug}_${p.w}x${p.h}.png`;
 }
 
-// Render a clean (no-guide-lines) crop at full resolution
+// Render a clean (no-guide-lines) image at full resolution
 function renderCleanCrop(p) {
   const img = uploadedImage;
   const canvas = document.createElement('canvas');
@@ -1344,28 +1411,40 @@ function renderCleanCrop(p) {
 
   const imgAspect = img.width / img.height;
   const platAspect = p.w / p.h;
-  let srcX, srcY, srcW, srcH;
 
-  if (imgAspect > platAspect) {
-    srcH = img.height;
-    srcW = img.height * platAspect;
-    srcX = (img.width - srcW) / 2;
-    srcY = 0;
+  if (fitMode === 'fill' && !p.circle) {
+    // Background: blurred cover at full res
+    ctx.save();
+    ctx.filter = 'blur(40px) brightness(0.55)';
+    let bW, bH;
+    if (imgAspect > platAspect) { bH = p.h; bW = p.h * imgAspect; }
+    else { bW = p.w; bH = p.w / imgAspect; }
+    ctx.drawImage(img, (p.w - bW) / 2, (p.h - bH) / 2, bW, bH);
+    ctx.restore();
+
+    // Foreground: contain
+    let fW, fH;
+    if (imgAspect > platAspect) { fW = p.w; fH = p.w / imgAspect; }
+    else { fH = p.h; fW = p.h * imgAspect; }
+    ctx.drawImage(img, 0, 0, img.width, img.height, (p.w - fW) / 2, (p.h - fH) / 2, fW, fH);
   } else {
-    srcW = img.width;
-    srcH = img.width / platAspect;
-    srcX = 0;
-    srcY = (img.height - srcH) / 2;
-  }
+    let srcX, srcY, srcW, srcH;
+    if (imgAspect > platAspect) {
+      srcH = img.height; srcW = img.height * platAspect;
+      srcX = (img.width - srcW) / 2; srcY = 0;
+    } else {
+      srcW = img.width; srcH = img.width / platAspect;
+      srcX = 0; srcY = (img.height - srcH) / 2;
+    }
 
-  // If circle profile, apply circular clip
-  if (p.circle) {
-    ctx.beginPath();
-    ctx.arc(p.w / 2, p.h / 2, Math.min(p.w, p.h) / 2, 0, Math.PI * 2);
-    ctx.clip();
-  }
+    if (p.circle) {
+      ctx.beginPath();
+      ctx.arc(p.w / 2, p.h / 2, Math.min(p.w, p.h) / 2, 0, Math.PI * 2);
+      ctx.clip();
+    }
 
-  ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, p.w, p.h);
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, p.w, p.h);
+  }
   return canvas;
 }
 
