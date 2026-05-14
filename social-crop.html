@@ -1028,8 +1028,8 @@ const PLATFORMS = [
     { id: 'ig-profile', name: 'IG 個人頭像', w: 320, h: 320, icon: '👤', color: '#e1306c', safeZone: 0.8, circle: true },
   ]},
   { group: 'Facebook', items: [
-    { id: 'fb-post-portrait', name: 'FB 貼文 (直式)', w: 1200, h: 1800, icon: '📘', color: '#1877f2', safeZone: 0.9 },
-    { id: 'fb-post-square', name: 'FB 貼文 (方形)', w: 1200, h: 1200, icon: '📘', color: '#1877f2', safeZone: 0.9 },
+    { id: 'fb-post', name: 'FB 貼文', w: 1080, h: 1080, icon: '📘', color: '#1877f2', safeZone: 0.9 },
+    { id: 'fb-post-portrait', name: 'FB 貼文 (直式)', w: 1080, h: 1350, icon: '📘', color: '#1877f2', safeZone: 0.9 },
     { id: 'fb-cover', name: 'FB 封面', w: 820, h: 312, icon: '🖼️', color: '#1877f2', safeZone: 0.85 },
     { id: 'fb-profile', name: 'FB 個人頭像', w: 180, h: 180, icon: '👤', color: '#1877f2', safeZone: 0.8, circle: true },
     { id: 'fb-stories', name: 'FB Stories', w: 1080, h: 1920, icon: '📱', color: '#1877f2', safeZone: 0.85 },
@@ -1198,19 +1198,15 @@ function drawCropPreview(canvas, p, dispW, dispH, overrideFitMode) {
     // Background: blurred cover
     ctx.save();
     ctx.filter = 'blur(18px) brightness(0.55)';
-    let bW, bH;
-    if (imgAspect > platAspect) { bH = dispH; bW = dispH * imgAspect; }
-    else { bW = dispW; bH = dispW / imgAspect; }
-    ctx.drawImage(img, (dispW - bW) / 2, (dispH - bH) / 2, bW, bH);
+    const pad = 40;
+    const bgScale = Math.max((dispW + pad * 2) / img.width, (dispH + pad * 2) / img.height);
+    const bgW = img.width * bgScale, bgH = img.height * bgScale;
+    ctx.drawImage(img, (dispW - bgW) / 2, (dispH - bgH) / 2, bgW, bgH);
     ctx.restore();
 
-    // Foreground: contain (全圖嵌入)
-    let fW, fH;
-    if (imgAspect > platAspect) { fW = dispW; fH = dispW / imgAspect; }
-    else { fH = dispH; fW = dispH * imgAspect; }
-    const fX = (dispW - fW) / 2;
-    const fY = (dispH - fH) / 2;
-    ctx.drawImage(img, 0, 0, img.width, img.height, fX, fY, fW, fH);
+    // Foreground: original image top-aligned, fit to canvas width
+    const fgH = Math.round(dispW / imgAspect);
+    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, dispW, Math.min(fgH, dispH));
   } else {
     // Crop mode: center crop
     let srcX, srcY, srcW, srcH;
@@ -1413,20 +1409,17 @@ function renderCleanCrop(p) {
   const platAspect = p.w / p.h;
 
   if (fitMode === 'fill' && !p.circle) {
-    // Background: blurred cover at full res
+    // Background: blurred cover at full res, top-aligned foreground
     ctx.save();
-    ctx.filter = 'blur(40px) brightness(0.55)';
-    let bW, bH;
-    if (imgAspect > platAspect) { bH = p.h; bW = p.h * imgAspect; }
-    else { bW = p.w; bH = p.w / imgAspect; }
-    ctx.drawImage(img, (p.w - bW) / 2, (p.h - bH) / 2, bW, bH);
+    ctx.filter = 'blur(60px) brightness(0.55)';
+    const pad = 80;
+    const bgScale = Math.max((p.w + pad * 2) / img.width, (p.h + pad * 2) / img.height);
+    const bgW = img.width * bgScale, bgH = img.height * bgScale;
+    ctx.drawImage(img, (p.w - bgW) / 2, (p.h - bgH) / 2, bgW, bgH);
     ctx.restore();
 
-    // Foreground: contain
-    let fW, fH;
-    if (imgAspect > platAspect) { fW = p.w; fH = p.w / imgAspect; }
-    else { fH = p.h; fW = p.h * imgAspect; }
-    ctx.drawImage(img, 0, 0, img.width, img.height, (p.w - fW) / 2, (p.h - fH) / 2, fW, fH);
+    const fgH = Math.round(p.w / imgAspect);
+    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, p.w, Math.min(fgH, p.h));
   } else {
     let srcX, srcY, srcW, srcH;
     if (imgAspect > platAspect) {
@@ -1436,13 +1429,11 @@ function renderCleanCrop(p) {
       srcW = img.width; srcH = img.width / platAspect;
       srcX = 0; srcY = (img.height - srcH) / 2;
     }
-
     if (p.circle) {
       ctx.beginPath();
       ctx.arc(p.w / 2, p.h / 2, Math.min(p.w, p.h) / 2, 0, Math.PI * 2);
       ctx.clip();
     }
-
     ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, p.w, p.h);
   }
   return canvas;
