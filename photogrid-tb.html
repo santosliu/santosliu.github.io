@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上下圖片合併</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            },
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-primary dark:text-primary">上下圖片合併工具</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Top image upload -->
+            <div id="uploadArea1" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px] relative overflow-hidden">
+                <label for="image1" id="label1" class="cursor-pointer flex flex-col items-center justify-center w-full h-full absolute inset-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="mt-2 text-sm text-gray-600 dark:text-gray-400">上傳上方圖片</span>
+                </label>
+                <div id="preview1" class="w-full h-full hidden relative">
+                    <img id="previewImage1" class="max-h-full max-w-full object-contain absolute top-0 left-0 cursor-grab" alt="Preview 1" data-image-id="1">
+                </div>
+                <input type="file" id="image1" class="hidden" accept="image/*">
+            </div>
+
+            <!-- Bottom image upload -->
+            <div id="uploadArea2" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px] relative overflow-hidden">
+                <label for="image2" id="label2" class="cursor-pointer flex flex-col items-center justify-center w-full h-full absolute inset-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="mt-2 text-sm text-gray-600 dark:text-gray-400">上傳下方圖片</span>
+                </label>
+                <div id="preview2" class="w-full h-full hidden relative">
+                    <img id="previewImage2" class="max-h-full max-w-full object-contain absolute top-0 left-0 cursor-grab" alt="Preview 2" data-image-id="2">
+                </div>
+                <input type="file" id="image2" class="hidden" accept="image/*">
+            </div>
+        </div>
+
+        <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">分割模式</label>
+                    <div class="flex">
+                        <button id="straightModeBtn" class="flex-1 bg-primary text-white py-2 px-4 rounded-l-lg">直線模式</button>
+                        <button id="diagonalModeBtn" class="flex-1 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-r-lg">斜線模式</button>
+                    </div>
+                </div>
+
+                <div id="diagonalControls" class="flex-1 hidden">
+                    <label for="diagonalSlider" class="block text-sm font-medium mb-2">斜線位置調整</label>
+                    <input type="range" id="diagonalSlider" min="0" max="100" value="50" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="mergeBtn" class="bg-primary hover:bg-primary/80 text-white py-2 px-6 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition" disabled>
+                    合併圖片
+                </button>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="hidden">
+            <div class="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-center">合併結果 (9:16)</h2>
+                <div class="flex justify-center">
+                    <canvas id="resultCanvas" class="max-w-full max-h-[80vh]"></canvas>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <a id="downloadBtn" href="#" download="merged_image_tb.png" class="bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-lg shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    下載合併圖片
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        let image1 = null;
+        let image2 = null;
+        let image1OffsetX = 0;
+        let image1OffsetY = 0;
+        let image2OffsetX = 0;
+        let image2OffsetY = 0;
+
+        let isDiagonalMode = false;
+        let diagonalPosition = 50;
+
+        const mergeBtn = document.getElementById('mergeBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const canvas = document.getElementById('resultCanvas');
+        const ctx = canvas.getContext('2d');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const straightModeBtn = document.getElementById('straightModeBtn');
+        const diagonalModeBtn = document.getElementById('diagonalModeBtn');
+        const diagonalControls = document.getElementById('diagonalControls');
+        const diagonalSlider = document.getElementById('diagonalSlider');
+
+        const previewImage1 = document.getElementById('previewImage1');
+        const previewImage2 = document.getElementById('previewImage2');
+        const preview1Container = document.getElementById('preview1');
+        const preview2Container = document.getElementById('preview2');
+        const label1 = document.getElementById('label1');
+        const label2 = document.getElementById('label2');
+
+        let isDragging = false;
+        let draggedImage = null;
+        let startX, startY;
+        let currentOffsetX, currentOffsetY;
+
+        document.getElementById('image1').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        image1 = img;
+                        previewImage1.src = event.target.result;
+                        preview1Container.classList.remove('hidden');
+                        label1.classList.add('hidden');
+                        image1OffsetX = 0;
+                        image1OffsetY = 0;
+                        previewImage1.style.left = '0px';
+                        previewImage1.style.top = '0px';
+                        checkEnableMerge();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('image2').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        image2 = img;
+                        previewImage2.src = event.target.result;
+                        preview2Container.classList.remove('hidden');
+                        label2.classList.add('hidden');
+                        image2OffsetX = 0;
+                        image2OffsetY = 0;
+                        previewImage2.style.left = '0px';
+                        previewImage2.style.top = '0px';
+                        checkEnableMerge();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function checkEnableMerge() {
+            mergeBtn.disabled = !(image1 && image2);
+        }
+
+        straightModeBtn.addEventListener('click', function() {
+            isDiagonalMode = false;
+            straightModeBtn.classList.add('bg-primary', 'text-white');
+            straightModeBtn.classList.remove('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            diagonalModeBtn.classList.remove('bg-primary', 'text-white');
+            diagonalModeBtn.classList.add('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            diagonalControls.classList.add('hidden');
+        });
+
+        diagonalModeBtn.addEventListener('click', function() {
+            isDiagonalMode = true;
+            diagonalModeBtn.classList.add('bg-primary', 'text-white');
+            diagonalModeBtn.classList.remove('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            straightModeBtn.classList.remove('bg-primary', 'text-white');
+            straightModeBtn.classList.add('bg-gray-300', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            diagonalControls.classList.remove('hidden');
+        });
+
+        diagonalSlider.addEventListener('input', function(e) {
+            diagonalPosition = parseInt(e.target.value);
+        });
+
+        mergeBtn.addEventListener('click', function() {
+            if (!image1 || !image2) return;
+
+            // 9:16 portrait canvas
+            const targetWidth = 900;
+            const targetHeight = 1600;
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (isDiagonalMode) {
+                drawWithDiagonalLine();
+            } else {
+                const halfHeight = targetHeight / 2;
+                drawScaledImage(image1, 0, targetWidth, halfHeight, image1OffsetX, image1OffsetY);
+                drawScaledImage(image2, halfHeight, targetWidth, halfHeight, image2OffsetX, image2OffsetY);
+            }
+
+            resultContainer.classList.remove('hidden');
+            downloadBtn.href = canvas.toDataURL('image/png');
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Draw image scaled to fill a horizontal band starting at destY
+        function drawScaledImage(img, destY, destWidth, destHeight, imgOffsetX = 0, imgOffsetY = 0) {
+            const imgRatio = img.width / img.height;
+            const destRatio = destWidth / destHeight;
+
+            let drawWidth, drawHeight, offsetX, offsetY;
+
+            if (imgRatio > destRatio) {
+                // Image wider than dest — fit to height
+                drawHeight = destHeight;
+                drawWidth = drawHeight * imgRatio;
+                offsetX = (destWidth - drawWidth) / 2;
+                offsetY = destY;
+            } else {
+                // Image taller than dest — fit to width
+                drawWidth = destWidth;
+                drawHeight = drawWidth / imgRatio;
+                offsetX = 0;
+                offsetY = destY + (destHeight - drawHeight) / 2;
+            }
+
+            ctx.drawImage(img, offsetX + imgOffsetX, offsetY + imgOffsetY, drawWidth, drawHeight);
+        }
+
+        // Diagonal split along a horizontal slanted line
+        function drawWithDiagonalLine() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const position = diagonalPosition / 100;
+
+            // Top image
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(w, 0);
+            ctx.lineTo(w, h * position);
+            ctx.lineTo(0, h * (1 - position));
+            ctx.closePath();
+            ctx.clip();
+            drawScaledImage(image1, 0, w, h, image1OffsetX, image1OffsetY);
+            ctx.restore();
+
+            // Bottom image
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, h * (1 - position));
+            ctx.lineTo(w, h * position);
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            ctx.clip();
+            drawScaledImage(image2, 0, w, h, image2OffsetX, image2OffsetY);
+            ctx.restore();
+        }
+
+        previewImage1.addEventListener('mousedown', startDrag);
+        previewImage2.addEventListener('mousedown', startDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            draggedImage = e.target;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            if (draggedImage.dataset.imageId === '1') {
+                currentOffsetX = image1OffsetX;
+                currentOffsetY = image1OffsetY;
+            } else {
+                currentOffsetX = image2OffsetX;
+                currentOffsetY = image2OffsetY;
+            }
+
+            draggedImage.style.cursor = 'grabbing';
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            const newOffsetX = currentOffsetX + dx;
+            const newOffsetY = currentOffsetY + dy;
+
+            if (draggedImage.dataset.imageId === '1') {
+                image1OffsetX = newOffsetX;
+                image1OffsetY = newOffsetY;
+                previewImage1.style.left = `${newOffsetX}px`;
+                previewImage1.style.top = `${newOffsetY}px`;
+            } else {
+                image2OffsetX = newOffsetX;
+                image2OffsetY = newOffsetY;
+                previewImage2.style.left = `${newOffsetX}px`;
+                previewImage2.style.top = `${newOffsetY}px`;
+            }
+        }
+
+        function endDrag() {
+            isDragging = false;
+            if (draggedImage) {
+                draggedImage.style.cursor = 'grab';
+                draggedImage = null;
+            }
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', endDrag);
+        }
+    </script>
+</body>
+</html>
