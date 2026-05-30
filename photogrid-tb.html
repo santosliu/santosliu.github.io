@@ -139,13 +139,13 @@
         let startX, startY;
         let currentOffsetX, currentOffsetY;
 
-        document.getElementById('image1').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
+        function loadImageFile(file, slot) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    if (slot === 1) {
                         image1 = img;
                         previewImage1.src = event.target.result;
                         preview1Container.classList.remove('hidden');
@@ -154,21 +154,7 @@
                         image1OffsetY = 0;
                         previewImage1.style.left = '0px';
                         previewImage1.style.top = '0px';
-                        checkEnableMerge();
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        document.getElementById('image2').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
+                    } else {
                         image2 = img;
                         previewImage2.src = event.target.result;
                         preview2Container.classList.remove('hidden');
@@ -177,12 +163,42 @@
                         image2OffsetY = 0;
                         previewImage2.style.left = '0px';
                         previewImage2.style.top = '0px';
-                        checkEnableMerge();
-                    };
-                    img.src = event.target.result;
+                    }
+                    checkEnableMerge();
                 };
-                reader.readAsDataURL(file);
-            }
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('image1').addEventListener('change', function(e) {
+            loadImageFile(e.target.files[0], 1);
+        });
+
+        document.getElementById('image2').addEventListener('change', function(e) {
+            loadImageFile(e.target.files[0], 2);
+        });
+
+        [1, 2].forEach(function(slot) {
+            const area = document.getElementById('uploadArea' + slot);
+            area.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                area.classList.add('border-primary', 'bg-primary/5');
+                area.classList.remove('border-gray-300', 'dark:border-gray-600');
+            });
+            area.addEventListener('dragleave', function(e) {
+                if (!area.contains(e.relatedTarget)) {
+                    area.classList.remove('border-primary', 'bg-primary/5');
+                    area.classList.add('border-gray-300', 'dark:border-gray-600');
+                }
+            });
+            area.addEventListener('drop', function(e) {
+                e.preventDefault();
+                area.classList.remove('border-primary', 'bg-primary/5');
+                area.classList.add('border-gray-300', 'dark:border-gray-600');
+                const file = e.dataTransfer.files[0];
+                loadImageFile(file, slot);
+            });
         });
 
         function checkEnableMerge() {
@@ -221,7 +237,7 @@
             canvas.width = targetWidth;
             canvas.height = targetHeight;
 
-            ctx.fillStyle = '#000000';
+            ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             if (isDiagonalMode) {
@@ -237,25 +253,27 @@
             resultContainer.scrollIntoView({ behavior: 'smooth' });
         });
 
-        // Draw image scaled to fill a horizontal band starting at destY
+        // Draw image scaled to fit (contain) within a horizontal band, with white background
         function drawScaledImage(img, destY, destWidth, destHeight, imgOffsetX = 0, imgOffsetY = 0) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, destY, destWidth, destHeight);
+
             const imgRatio = img.width / img.height;
             const destRatio = destWidth / destHeight;
-
             let drawWidth, drawHeight, offsetX, offsetY;
 
             if (imgRatio > destRatio) {
-                // Image wider than dest — fit to height
-                drawHeight = destHeight;
-                drawWidth = drawHeight * imgRatio;
-                offsetX = (destWidth - drawWidth) / 2;
-                offsetY = destY;
-            } else {
-                // Image taller than dest — fit to width
+                // Image wider — fit to width, letterbox top/bottom
                 drawWidth = destWidth;
                 drawHeight = drawWidth / imgRatio;
                 offsetX = 0;
                 offsetY = destY + (destHeight - drawHeight) / 2;
+            } else {
+                // Image taller — fit to height, pillarbox left/right
+                drawHeight = destHeight;
+                drawWidth = drawHeight * imgRatio;
+                offsetX = (destWidth - drawWidth) / 2;
+                offsetY = destY;
             }
 
             ctx.drawImage(img, offsetX + imgOffsetX, offsetY + imgOffsetY, drawWidth, drawHeight);
