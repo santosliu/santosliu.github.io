@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Clean Threads URL Parameters (Dynamic)
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @match        https://www.threads.net/*
 // @match        https://www.threads.com/*
 // @run-at       document-start
@@ -32,7 +32,11 @@
         }
     }
 
+    // 注入當下立即清一次（document-start 時網址已可讀，不等事件）
+    cleanURL();
+
     // 1. 網頁剛載入時檢查一次
+    window.addEventListener('DOMContentLoaded', cleanURL);
     window.addEventListener('load', cleanURL);
 
     // 2. 監聽 URL 變化（針對單頁應用 SPA 如 Threads）

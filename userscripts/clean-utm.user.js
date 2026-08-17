@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Auto Clean UTM and Tracking Parameters (All Sites)
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @match        *://*/*
 // @run-at       document-start
 // @downloadURL  https://santosliu.github.io/userscripts/clean-utm.user.js
@@ -44,7 +44,11 @@
         }
     }
 
+    // 注入當下立即清一次（document-start 時網址已可讀，不等事件）
+    cleanURL();
+
     // 頁面載入時檢查
+    window.addEventListener('DOMContentLoaded', cleanURL);
     window.addEventListener('load', cleanURL);
 
     // 支援 SPA 單頁應用跳轉攔截

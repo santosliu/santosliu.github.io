@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Clean Facebook rdid Parameter
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @match        https://www.facebook.com/*
 // @run-at       document-start
 // @downloadURL  https://santosliu.github.io/userscripts/clean-fb-rdid.user.js
@@ -27,6 +27,9 @@
             window.history.replaceState({}, '', url.toString());
         }
     }
+
+    // 注入當下立即清一次（document-start 時網址已可讀，不等事件）
+    cleanURL();
 
     // 1. 頁面載入時檢查
     window.addEventListener('DOMContentLoaded', cleanURL);
