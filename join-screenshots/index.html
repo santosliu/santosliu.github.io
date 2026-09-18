@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+        <meta charset=utf-8>
+        <meta http-equiv=X-UA-Compatible content="IE=edge">
+        <meta name=viewport content="width=device-width,initial-scale=1">
+        <title>影片字幕截圖拼接</title>
+        <meta name=msapplication-tap-highlight content=no>
+        <meta name=theme-color content=#2196f3>
+
+        <link href=css/app.de1a75d55cba0e5e59828c244e2ccc02.css rel=stylesheet>
+        <style>
+                /* #app 原本是 height:100%，會把 footer 擠出視窗外，改由 body 當 flex 容器分配空間 */
+                body {
+                        display: flex;
+                        flex-direction: column;
+                }
+                footer {
+                        flex: none;
+                        padding: 12px;
+                        text-align: center;
+                        font-size: .85em;
+                        line-height: 1.8;
+                        color: #888;
+                        background: #fafafa;
+                }
+                footer a {
+                        color: #888;
+                        text-decoration: underline;
+                }
+        </style>
+</head>
+
+<body>
+        <div id=app></div>
+        <footer>
+                <a href="https://santosliu.github.io/">← 回首頁</a><br>
+                改作自 <a href="https://github.com/zhanghai/join-screenshots.zhanghai.me" target="_blank" rel="noopener">zhanghai/join-screenshots</a>
+        </footer>
+        <script type=text/javascript src=js/manifest.22ecc124ea5e0ddefcfb.js></script>
+        <script type=text/javascript src=js/vendor.16d0216a3834a327dc14.js></script>
+        <script type=text/javascript src=js/app.6bbe296422ccf09098f1.js></script>
+</body>
+
+</html>
