@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <title>反情搜文字直書產生器 | AntiIntelGather</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="./assets/css/bootstrap.css" rel="stylesheet">
+    <script src="./assets/js/function.js"></script>
+    
+    <style type="text/css">
+      body {
+        padding-top: 20px;
+        padding-bottom: 40px;
+      }
+
+      /* Custom container */
+      .container-narrow {
+        margin: 0 auto;
+        max-width: 700px;
+      }
+      .container-narrow > hr {
+        margin: 30px 0;
+      }
+
+      /* Main marketing message and sign up button */
+      .jumbotron {
+        margin: 60px 0;
+        text-align: center;
+      }
+      .jumbotron h1 {
+        font-size: 72px;
+        line-height: 1;
+      }
+      .jumbotron .btn {
+        font-size: 21px;
+        padding: 14px 24px;
+      }
+
+      /* Supporting marketing content */
+      .marketing {
+        margin: 60px 0;
+      }
+      .marketing p + h4 {
+        margin-top: 28px;
+      }
+    </style>
+    <link href="./assets/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+  </head>
+
+<body>
+
+  <div class="container-narrow">
+
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li class="active"><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+        <h3 class="muted">反情搜文字直書產生器 | AntiIntelGather</h3>
+      </div>
+
+   <div class="jumbotron">
+        <h1>把你的橫書轉直書</h1>
+        <form class="navbar-form pull-left">
+          <input type="text" class="span7"  id="userText" placeholder="輸入要轉換字串，讓文字由橫書轉直書，以防止自動化偵測" >
+        </form>
+
+      </div>
+      <p>
+      	<form id="textChoice">
+			<input type="radio" name="textChoice" id="byChars" checked> 每行 <input type='text' class="span1" id='lineLength' value="6"> 個字<br>
+			<input type="radio" name="textChoice" id="byLines"> 共 <input type='text' class="span1" id='lines' value="2"> 行<br>
+		</form>
+       	<button type="submit" class="btn btn-large btn-success" onclick="myFunction()" >我要反情搜！</button>
+          	
+          	
+          </p>
+      <textarea rows="7"  cols="70" id="output" style="margin: 0px 0px 10px; width: 647px; height: 140px;" ></textarea>
+      <hr>
+
+<div class="footer" style="padding:12px 0;text-align:center;font-size:.85em;color:#888;line-height:1.8">
+      <a href="https://santosliu.github.io/" style="color:#888">← 回首頁</a><br>
+      改作自 <a href="https://github.com/AntiIntelGather/AntiIntelGather.github.io" target="_blank" rel="noopener" style="color:#888">AntiIntelGather</a>，授權 <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener" style="color:#888">CC0 1.0</a>
+      </div>
+</div>
+
+</body>
+</html>
