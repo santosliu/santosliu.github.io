@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         Clean YouTube Playlist Parameters
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  移除 YouTube 影片網址的 list / start_radio / index 等播放清單參數
+// @author       santosliu
 // @match        https://www.youtube.com/*
 // @match        https://m.youtube.com/*
 // @run-at       document-start

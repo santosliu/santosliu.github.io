@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         PTT Mirror Redirect
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  PTT 鏡像站（MoPTT、BePTT、PttWeb）文章網址自動轉址到 PTT 原文 www.ptt.cc/bbs/看板/文章ID.html
+// @author       santosliu
 // @match        https://moptt.tw/p/*
 // @match        https://bbs.beptt.tw/*
 // @match        https://www.pttweb.cc/bbs/*

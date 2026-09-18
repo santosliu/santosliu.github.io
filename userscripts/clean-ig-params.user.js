@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         Clean Instagram Post URL Parameters
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Instagram 貼文網址自動移除問號後的所有參數（igsh、img_index 等）
+// @author       santosliu
 // @match        https://www.instagram.com/*
 // @run-at       document-start
 // @downloadURL  https://santosliu.github.io/userscripts/clean-ig-params.user.js

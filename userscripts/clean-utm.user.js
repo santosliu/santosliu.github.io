@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         Auto Clean UTM and Tracking Parameters (All Sites)
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
+// @description  所有網站網址自動移除 utm_* 與 fbclid、gclid、msclkid 等常見追蹤參數
+// @author       santosliu
 // @match        *://*/*
 // @run-at       document-start
 // @downloadURL  https://santosliu.github.io/userscripts/clean-utm.user.js

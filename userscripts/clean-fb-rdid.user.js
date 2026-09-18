@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         Clean Facebook rdid Parameter
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
+// @description  Facebook 網址自動移除 rdid 追蹤參數（含 SPA 內部跳轉）
+// @author       santosliu
 // @match        https://www.facebook.com/*
 // @run-at       document-start
 // @downloadURL  https://santosliu.github.io/userscripts/clean-fb-rdid.user.js

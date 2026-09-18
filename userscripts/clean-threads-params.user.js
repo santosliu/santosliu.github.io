@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         Clean Threads URL Parameters (Dynamic)
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
+// @description  Threads 網址自動移除 xmt、slof 追蹤參數（含 SPA 內部跳轉）
+// @author       santosliu
 // @match        https://www.threads.net/*
 // @match        https://www.threads.com/*
 // @run-at       document-start
