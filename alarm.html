@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>網頁鬧鐘</title>
+<style>
+  :root { color-scheme: light dark; --accent: #5D5CDE; }
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+  h1 { text-align: center; }
+  #now { text-align: center; font-size: 3rem; font-variant-numeric: tabular-nums; margin: 0 0 24px; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; }
+  input { font-size: 1rem; padding: 8px; }
+  #msg { flex: 1; min-width: 160px; }
+  button { font-size: 1rem; padding: 8px 16px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; cursor: pointer; }
+  ul { list-style: none; padding: 0; }
+  li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #8884; }
+  li b { font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+  li span { flex: 1; overflow-wrap: anywhere; }
+  li button { background: transparent; color: inherit; padding: 4px 8px; }
+  dialog { border: 0; border-radius: 12px; padding: 32px; text-align: center; min-width: 260px; }
+  dialog::backdrop { background: #000a; }
+  dialog h2 { font-size: 2.5rem; margin: 0 0 8px; }
+  dialog p { font-size: 1.3rem; margin: 0 0 24px; }
+  .hint { font-size: .85rem; opacity: .7; }
+</style>
+</head>
+<body>
+<h1>網頁鬧鐘</h1>
+<p id="now"></p>
+
+<form id="form">
+  <input type="time" id="time" required>
+  <input type="text" id="msg" placeholder="提醒內容">
+  <button>新增</button>
+</form>
+<ul id="list"></ul>
+<p class="hint">需保持此分頁開啟才會響鈴（背景分頁可能延遲最多約 1 分鐘）。</p>
+
+<dialog id="ring">
+  <h2 id="ringTime"></h2>
+  <p id="ringMsg"></p>
+  <button id="stop">關閉</button>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = 'alarms';
+let alarms = [];
+try { alarms = JSON.parse(localStorage.getItem(KEY)) || []; } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(alarms)); } catch {} };
+
+// 下一次出現 HH:MM 的時間戳；今天已過就排到明天
+function nextAt(hhmm, now = new Date()) {
+  const [h, m] = hhmm.split(':').map(Number);
+  const d = new Date(now);
+  d.setHours(h, m, 0, 0);
+  if (d <= now) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+console.assert(nextAt('10:00', new Date(2026, 0, 1, 9, 0)) === new Date(2026, 0, 1, 10, 0).getTime(), 'nextAt 今天');
+console.assert(nextAt('08:00', new Date(2026, 0, 1, 9, 0)) === new Date(2026, 0, 2, 8, 0).getTime(), 'nextAt 明天');
+
+function render() {
+  alarms.sort((a, b) => a.at - b.at);
+  $('list').innerHTML = '';
+  for (const a of alarms) {
+    const li = document.createElement('li');
+    li.innerHTML = '<b></b><span></span><button title="刪除">✕</button>';
+    li.querySelector('b').textContent = a.time;
+    li.querySelector('span').textContent = a.msg;
+    li.querySelector('button').onclick = () => { alarms = alarms.filter(x => x !== a); save(); render(); };
+    $('list').append(li);
+  }
+}
+
+$('form').onsubmit = e => {
+  e.preventDefault();
+  const time = $('time').value;
+  alarms.push({ time, msg: $('msg').value.trim() || '時間到！', at: nextAt(time) });
+  save(); render();
+  $('msg').value = '';
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+};
+
+// 響鈴：WebAudio 嗶嗶聲，關閉前持續
+let audio, beepTimer;
+function beep() {
+  audio ||= new AudioContext();
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.frequency.value = 880;
+  g.gain.setValueAtTime(0.3, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.4);
+  o.connect(g).connect(audio.destination);
+  o.start(); o.stop(audio.currentTime + 0.4);
+}
+document.addEventListener('click', () => audio ||= new AudioContext(), { once: true }); // 瀏覽器要求先有使用者互動才能出聲
+
+function ring(a) {
+  $('ringTime').textContent = a.time;
+  $('ringMsg').textContent = a.msg;
+  if (!$('ring').open) $('ring').showModal();
+  clearInterval(beepTimer);
+  beep(); beepTimer = setInterval(beep, 800);
+  if ('Notification' in window && Notification.permission === 'granted') new Notification(`⏰ ${a.time}`, { body: a.msg });
+  document.title = `⏰ ${a.msg}`;
+}
+$('ring').addEventListener('close', () => { clearInterval(beepTimer); document.title = '網頁鬧鐘'; });
+$('stop').onclick = () => $('ring').close();
+
+function tick() {
+  $('now').textContent = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+  const due = alarms.filter(a => a.at <= Date.now());
+  if (!due.length) return;
+  alarms = alarms.filter(a => !due.includes(a)); // ponytail: 單次鬧鐘，響完即刪；要每天重複再加 repeat 旗標
+  save(); render();
+  ring(due.at(-1));
+}
+
+render(); tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
